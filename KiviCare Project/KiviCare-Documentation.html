@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KiviCare - Complete Clinic Management System</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6C63FF;
+            --primary-dark: #5A52D5;
+            --secondary: #FF6B6B;
+            --success: #4ECB71;
+            --warning: #FFB946;
+            --danger: #FF5252;
+            --dark: #2D3436;
+            --light: #F8F9FA;
+            --gradient: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0f2f5;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: var(--gradient);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 50%);
+            animation: pulse 15s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero .developer {
+            margin-top: 15px;
+            font-size: 1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Section Title */
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-title h2 {
+            font-size: 2rem;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .section-title p {
+            color: #666;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        /* Card */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .card-icon.purple { background: linear-gradient(135deg, #6C63FF, #4FACFE); }
+        .card-icon.green { background: linear-gradient(135deg, #4ECB71, #2ECC71); }
+        .card-icon.orange { background: linear-gradient(135deg, #FFB946, #FF9500); }
+
+        .card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .card p {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-badge.success {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 15px;
+            width: 12px;
+            height: 12px;
+            background: #FF5F56;
+            border-radius: 50%;
+            box-shadow: 20px 0 0 #FFBD2E, 40px 0 0 #27CA40;
+        }
+
+        .code-block code {
+            color: #a6e3a1;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            display: block;
+            margin-top: 20px;
+        }
+
+        .code-block .comment {
+            color: #6c7086;
+        }
+
+        .code-block .command {
+            color: #89b4fa;
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            margin-bottom: 50px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: var(--gradient);
+            color: white;
+            font-weight: 500;
+        }
+
+        th:first-child {
+            border-radius: 10px 0 0 10px;
+        }
+
+        th:last-child {
+            border-radius: 0 10px 10px 0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        td code {
+            background: #e8f4f8;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            color: var(--primary);
+        }
+
+        /* Steps */
+        .steps {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            margin-bottom: 50px;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .step:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            margin-right: 25px;
+        }
+
+        .step-content h4 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .step-content p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Alert Box */
+        .alert {
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+
+        .alert.warning {
+            background: #FFF3E0;
+            border-left: 4px solid #FF9800;
+        }
+
+        .alert.info {
+            background: #E3F2FD;
+            border-left: 4px solid #2196F3;
+        }
+
+        .alert.success {
+            background: #E8F5E9;
+            border-left: 4px solid #4CAF50;
+        }
+
+        /* Feature List */
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .feature-item::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        footer p {
+            opacity: 0.8;
+        }
+
+        footer .developer-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        footer .developer-info h4 {
+            color: #4FACFE;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step {
+                flex-direction: column;
+            }
+
+            .step-number {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 15px; position: relative; z-index: 1;">
+            <img src="favicon.ico" alt="Logo" style="height: 60px;">
+            <h1 style="color: black; margin: 0;">KiviCare</h1>
+        </div>
+        <p>Complete Clinic Management System - Laravel & Flutter</p>
+        <span class="badge">Version 1.8.2</span>
+        <p class="developer">Developed by <strong>Fatima Choudhry</strong> & <strong>Aliza Naeem</strong></p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+
+        <!-- System Overview -->
+        <section class="section-title">
+            <h2>📦 System Components</h2>
+            <p>KiviCare consists of multiple applications working together</p>
+        </section>
+
+        <div class="cards-grid">
+            <!-- Patient App -->
+            <div class="card">
+                <div class="card-icon purple">📱</div>
+                <h3>Patient App (Mobile)</h3>
+                <p>Flutter mobile application for patients to book appointments, view doctors, and manage their health records.</p>
+                <span class="status-badge success">✅ Working</span>
+                <div class="code-block">
+                    <code>
+                        <span class="comment"># Location:</span><br>
+                        <span class="command">C:\kivicare-patient</span><br><br>
+                        <span class="comment"># Run command:</span><br>
+                        <span class="command">cd C:\kivicare-patient</span><br>
+                        <span class="command">flutter run</span>
+                    </code>
+                </div>
+            </div>
+
+            <!-- Admin Panel Web -->
+            <div class="card">
+                <div class="card-icon green">🌐</div>
+                <h3>Admin Panel (Web)</h3>
+                <p>Laravel-based web dashboard for clinic administrators to manage appointments, doctors, services, and settings.</p>
+                <span class="status-badge success">✅ Working</span>
+                <div class="code-block">
+                    <code>
+                        <span class="comment"># Run command:</span><br>
+                        <span class="command">php artisan serve --host=0.0.0.0 --port=8000</span><br><br>
+                        <span class="comment"># Access URL:</span><br>
+                        <span class="command">http://192.168.100.87:8000</span>
+                    </code>
+                </div>
+            </div>
+
+            <!-- Admin App Mobile -->
+            <div class="card">
+                <div class="card-icon orange">📲</div>
+                <h3>Admin App (Mobile)</h3>
+                <p>Flutter mobile application for clinic staff, doctors, and receptionists to manage appointments and patient records on the go.</p>
+                <span class="status-badge success">✅ Working</span>
+                <div class="code-block">
+                    <code>
+                        <span class="comment"># Location:</span><br>
+                        <span class="command">C:\kivicare-admin</span><br><br>
+                        <span class="comment"># Run command:</span><br>
+                        <span class="command">cd C:\kivicare-admin</span><br>
+                        <span class="command">flutter run</span>
+                    </code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Credentials -->
+        <section class="section-title">
+            <h2>🔐 Login Credentials</h2>
+            <p>Default login credentials for all applications</p>
+        </section>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Email</th>
+                        <th>Password</th>
+                        <th>Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Super Admin</strong></td>
+                        <td><code>admin@admin.com</code></td>
+                        <td><code>12345678</code></td>
+                        <td>Full system access</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Clinic Vendor</strong></td>
+                        <td><code>vendor@kivicare.com</code></td>
+                        <td><code>12345678</code></td>
+                        <td>Clinic management</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Doctor</strong></td>
+                        <td><code>doctor@kivicare.com</code></td>
+                        <td><code>12345678</code></td>
+                        <td>Doctor dashboard</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Receptionist</strong></td>
+                        <td><code>receptionist@kivicare.com</code></td>
+                        <td><code>12345678</code></td>
+                        <td>Appointment booking</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Patient</strong></td>
+                        <td><code>john@gmail.com</code></td>
+                        <td><code>12345678</code></td>
+                        <td>Patient app</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Quick Start Guide -->
+        <section class="section-title">
+            <h2>🚀 Quick Start Guide</h2>
+            <p>Follow these steps to run the applications</p>
+        </section>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Start Laravel Backend</h4>
+                    <p>Open terminal and navigate to Admin Panel folder, then run the artisan serve command.</p>
+                    <div class="code-block">
+                        <code>
+                            <span class="command">cd "Admin Panel\kivicare-laravel-web-v1.8.2\kivicare-laravel-web-v1.8.2"</span><br>
+                            <span class="command">php artisan serve --host=0.0.0.0 --port=8000</span>
+                        </code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Access Admin Panel</h4>
+                    <p>Open your browser and navigate to the admin panel URL.</p>
+                    <div class="code-block">
+                        <code>
+                            <span class="command">http://192.168.100.87:8000</span>
+                        </code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Run Patient App (Mobile)</h4>
+                    <p>Connect your Android device via USB with USB debugging enabled, then run Flutter.</p>
+                    <div class="code-block">
+                        <code>
+                            <span class="command">cd C:\kivicare-patient</span><br>
+                            <span class="command">flutter run</span>
+                        </code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h4>Run Admin App (Mobile)</h4>
+                    <p>Connect your Android device via USB with USB debugging enabled, then run Flutter.</p>
+                    <div class="code-block">
+                        <code>
+                            <span class="command">cd C:\kivicare-admin</span><br>
+                            <span class="command">flutter run</span>
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient App Features -->
+        <section class="section-title">
+            <h2>📱 Patient App Features</h2>
+            <p>Features available in the Patient App</p>
+        </section>
+
+        <div class="table-container">
+            <div class="feature-list">
+                <div class="feature-item">Book Appointments</div>
+                <div class="feature-item">View Doctors</div>
+                <div class="feature-item">Browse Services</div>
+                <div class="feature-item">View Clinics</div>
+                <div class="feature-item">Appointment History</div>
+                <div class="feature-item">Online Payments</div>
+                <div class="feature-item">JazzCash Payment</div>
+                <div class="feature-item">Easypaisa Payment</div>
+                <div class="feature-item">Bank Transfer</div>
+                <div class="feature-item">Cash Payment</div>
+                <div class="feature-item">Wallet System</div>
+                <div class="feature-item">Push Notifications</div>
+                <div class="feature-item">Multi-language Support</div>
+                <div class="feature-item">Dark Mode</div>
+                <div class="feature-item">Profile Management</div>
+                <div class="feature-item">Medical Records</div>
+            </div>
+        </div>
+
+        <!-- Admin App Features -->
+        <section class="section-title">
+            <h2>📲 Admin App Features</h2>
+            <p>Features available in the Admin Mobile App</p>
+        </section>
+
+        <div class="table-container">
+            <div class="feature-list">
+                <div class="feature-item">Manage Appointments</div>
+                <div class="feature-item">View Patient List</div>
+                <div class="feature-item">Doctor Dashboard</div>
+                <div class="feature-item">Clinic Management</div>
+                <div class="feature-item">Service Management</div>
+                <div class="feature-item">Encounter Management</div>
+                <div class="feature-item">Invoice Generation</div>
+                <div class="feature-item">Prescription Management</div>
+                <div class="feature-item">Medical Reports</div>
+                <div class="feature-item">Push Notifications</div>
+                <div class="feature-item">Multi-language Support</div>
+                <div class="feature-item">Dark Mode</div>
+            </div>
+        </div>
+
+        <!-- Configuration -->
+        <section class="section-title">
+            <h2>⚙️ Configuration</h2>
+            <p>Important configuration files and settings</p>
+        </section>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Location</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>configs.dart (Patient)</strong></td>
+                        <td><code>C:\kivicare-patient\lib\configs.dart</code></td>
+                        <td>API URL configuration for Patient App</td>
+                    </tr>
+                    <tr>
+                        <td><strong>configs.dart (Admin)</strong></td>
+                        <td><code>C:\kivicare-admin\lib\configs.dart</code></td>
+                        <td>API URL configuration for Admin App</td>
+                    </tr>
+                    <tr>
+                        <td><strong>.env</strong></td>
+                        <td><code>Admin Panel\.env</code></td>
+                        <td>Laravel environment settings</td>
+                    </tr>
+                    <tr>
+                        <td><strong>database.sqlite</strong></td>
+                        <td><code>Admin Panel\database\database.sqlite</code></td>
+                        <td>SQLite database file</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- API Configuration -->
+        <section class="section-title">
+            <h2>🔗 API Configuration</h2>
+            <p>Connect Mobile Apps to Admin Panel</p>
+        </section>
+
+        <div class="steps">
+            <div class="alert info">
+                <span class="alert-icon">💡</span>
+                <span>Both mobile apps need to connect to the Laravel backend. Make sure to update the DOMAIN_URL in configs.dart</span>
+            </div>
+            
+            <div class="code-block">
+                <code>
+                    <span class="comment">// File: configs.dart (in both apps)</span><br><br>
+                    <span class="comment">// For local development:</span><br>
+                    <span class="command">const DOMAIN_URL = "http://192.168.100.87:8000";</span><br><br>
+                    <span class="comment">// For production (replace with your domain):</span><br>
+                    <span class="command">const DOMAIN_URL = "https://yourdomain.com";</span>
+                </code>
+            </div>
+        </div>
+
+        <!-- Payment Methods -->
+        <section class="section-title">
+            <h2>💳 Payment Methods</h2>
+            <p>Supported payment methods in the system</p>
+        </section>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Payment Method</th>
+                        <th>Status</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>💵 Cash</strong></td>
+                        <td><span class="status-badge success">Enabled</span></td>
+                        <td>Pay at clinic after service</td>
+                    </tr>
+                    <tr>
+                        <td><strong>👛 Wallet</strong></td>
+                        <td><span class="status-badge success">Enabled</span></td>
+                        <td>Pay from app wallet balance</td>
+                    </tr>
+                    <tr>
+                        <td><strong>📱 JazzCash</strong></td>
+                        <td><span class="status-badge success">Enabled</span></td>
+                        <td>Mobile wallet payment</td>
+                    </tr>
+                    <tr>
+                        <td><strong>📱 Easypaisa</strong></td>
+                        <td><span class="status-badge success">Enabled</span></td>
+                        <td>Mobile wallet payment</td>
+                    </tr>
+                    <tr>
+                        <td><strong>🏦 Bank Transfer</strong></td>
+                        <td><span class="status-badge success">Enabled</span></td>
+                        <td>Direct bank transfer</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Troubleshooting -->
+        <section class="section-title">
+            <h2>🔧 Troubleshooting</h2>
+            <p>Common issues and solutions</p>
+        </section>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Issue</th>
+                        <th>Solution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Images not loading in Mobile Apps</td>
+                        <td>Ensure APP_URL in Laravel .env matches the IP address used in configs.dart</td>
+                    </tr>
+                    <tr>
+                        <td>Cannot connect to server</td>
+                        <td>Check if Laravel server is running and firewall allows port 8000</td>
+                    </tr>
+                    <tr>
+                        <td>App crashes on startup</td>
+                        <td>Run <code>flutter clean</code> then <code>flutter pub get</code></td>
+                    </tr>
+                    <tr>
+                        <td>Payment methods not showing</td>
+                        <td>Enable payment methods in Admin Panel → Settings → Payment Settings</td>
+                    </tr>
+                    <tr>
+                        <td>Login failed error</td>
+                        <td>Check DOMAIN_URL in configs.dart and ensure server is running</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Success Message -->
+        <div class="alert success">
+            <span class="alert-icon">✅</span>
+            <div>
+                <strong>All Systems Operational!</strong><br>
+                Patient App, Admin Panel (Web), and Admin App (Mobile) are all working correctly.
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>KiviCare - Complete Clinic Management System</p>
+        <p>Version 1.8.2 | Laravel + Flutter</p>
+        
+        <div class="developer-info">
+            <h4>👩‍💻 Developers</h4>
+            <p><strong>Fatima Choudhry</strong> & <strong>Aliza Naeem</strong></p>
+        </div>
+        
+        <p style="margin-top: 20px; font-size: 0.85rem;">Documentation generated on December 10, 2025</p>
+    </footer>
+
+</body>
+</html>
