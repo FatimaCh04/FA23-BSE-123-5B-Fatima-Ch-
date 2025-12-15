@@ -34,6 +34,7 @@
 
 
 
+<img src="https://github.com/user-attachments/assets/42626c11-4915-486d-ad59-53e929ad009c" width="500" height="300" />
 
 
 ![IMG-20251215-WA0006](https://github.com/user-attachments/assets/42626c11-4915-486d-ad59-53e929ad009c)
