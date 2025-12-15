@@ -1,0 +1,202 @@
+{
+  "project_info": {
+    "project_number": "207755062367",
+    "project_id": "health-and-wellness-flutter",
+    "storage_bucket": "health-and-wellness-flutter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:207755062367:android:4b9619d43645f535b97fea",
+        "android_client_info": {
+          "package_name": "com.wellness.customer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "207755062367-2rjpgkcnihbnrq3u5rjsqpd642tt79gb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.customer",
+            "certificate_hash": "40a65a047fe60f1f41fdd9b6d38b922b1f078f26"
+          }
+        },
+        {
+          "client_id": "207755062367-3ocqdrso586msttfdq60ht4bifaf3ddc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.customer",
+            "certificate_hash": "3d0bd8e0998afa3a0042f03152935f77d98ec22b"
+          }
+        },
+        {
+          "client_id": "207755062367-4oh0gsgveb53p0m88rah193c06r35111.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.customer",
+            "certificate_hash": "60c20f6263f4ab7a5f364b64cbb3cb3d620ec9b6"
+          }
+        },
+        {
+          "client_id": "207755062367-7k068nlq4mla5vguks5n1166bt9ildcm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.customer",
+            "certificate_hash": "988890d66501f70f335e818906e1d67d99cfa208"
+          }
+        },
+        {
+          "client_id": "207755062367-8jgp1cuo0nbkq6vpbosmpbbqh6tmismj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.customer",
+            "certificate_hash": "4f5ccc39f00b7434c34bcf625edf2861feb4bd84"
+          }
+        },
+        {
+          "client_id": "207755062367-bcgjklg3bqto9dk4f3r944kid4uocm81.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.customer",
+            "certificate_hash": "1e42c7fe63539e08dfbc7a230ff08cfb1b23a3f7"
+          }
+        },
+        {
+          "client_id": "207755062367-e0jdumsvc8e7oa509nhf0r7qklujp8nh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.customer",
+            "certificate_hash": "5d39443fd02a3a63995b2a6e564b225a990d09e5"
+          }
+        },
+        {
+          "client_id": "207755062367-hbvfnabll0fno0uh7e3memdro8kugp37.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.customer",
+            "certificate_hash": "9555879b4cff5785b98a6632a92b267c31f7958b"
+          }
+        },
+        {
+          "client_id": "207755062367-puqt8vb01felnk5hvu57cr36aeu3pqof.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.customer",
+            "certificate_hash": "42d0d1a630272b3943455b6fa33cbd0fd0ae56c3"
+          }
+        },
+        {
+          "client_id": "207755062367-nl755egpp552b3l0d12sglhem56tr5ul.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSW1Dwh0W1yt3A3pD8sFqlrnEKrheTCpQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "207755062367-0j47t0857l6boacoqqv302403m0b9dnc.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "207755062367-6l458u41dsnqtb3vi660sgfak664e0n5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.wellness.vendor"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:207755062367:android:c67ae2d1a7aeb1dab97fea",
+        "android_client_info": {
+          "package_name": "com.wellness.vendor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "207755062367-5b8d4ec36h11q72r5vt9k4on7ck94gp5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.vendor",
+            "certificate_hash": "fe5066a1a09cc3fa278f230db7f267a7d0712f57"
+          }
+        },
+        {
+          "client_id": "207755062367-5lrbaac2b8mf3ce2liekkqkedtqcge6c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.vendor",
+            "certificate_hash": "1e42c7fe63539e08dfbc7a230ff08cfb1b23a3f7"
+          }
+        },
+        {
+          "client_id": "207755062367-hec0q0sbll8bag3mkd0m4ua8sknjfq06.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.vendor",
+            "certificate_hash": "ee6698c214eafc8353d857e09538e06808b8b2ee"
+          }
+        },
+        {
+          "client_id": "207755062367-o8iautglui2n6vd2speb270tnbk612g7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.vendor",
+            "certificate_hash": "4f5ccc39f00b7434c34bcf625edf2861feb4bd84"
+          }
+        },
+        {
+          "client_id": "207755062367-uf96nuhamav726bj2gnr95vtq3uifjgn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.vendor",
+            "certificate_hash": "42d0d1a630272b3943455b6fa33cbd0fd0ae56c3"
+          }
+        },
+        {
+          "client_id": "207755062367-v79jmeketvort0983siq7e5s3e3fuflv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wellness.vendor",
+            "certificate_hash": "2492fed103b13b19ed2708c925fcd3a5dd63602c"
+          }
+        },
+        {
+          "client_id": "207755062367-nl755egpp552b3l0d12sglhem56tr5ul.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSW1Dwh0W1yt3A3pD8sFqlrnEKrheTCpQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "207755062367-0j47t0857l6boacoqqv302403m0b9dnc.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "207755062367-6l458u41dsnqtb3vi660sgfak664e0n5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.wellness.vendor"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
