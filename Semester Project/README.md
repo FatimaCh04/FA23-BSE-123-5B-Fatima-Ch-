@@ -33,10 +33,6 @@
 <img width="500" height="300" alt="11" src="https://github.com/user-attachments/assets/9a0e95de-6442-4267-ab50-257fe8b12256" />
 
 
-
-<img src="https://github.com/user-attachments/assets/42626c11-4915-486d-ad59-53e929ad009c" width="500" height="300" />
-
-
 ![IMG-20251215-WA0006](https://github.com/user-attachments/assets/42626c11-4915-486d-ad59-53e929ad009c)
 
 
