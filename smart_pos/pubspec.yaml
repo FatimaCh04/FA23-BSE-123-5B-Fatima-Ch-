@@ -1,0 +1,70 @@
+name: smart_pos
+description: "Smart POS & Full Inventory Management App - Production Ready"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # UI Components
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10+1
+  shimmer: ^3.0.0
+  flutter_staggered_animations: ^1.1.1
+  animated_text_kit: ^4.2.2
+  fl_chart: ^0.69.0
+  
+  # State Management
+  provider: ^6.1.2
+  
+  # Firebase
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.2
+  
+  # Local Database
+  sqflite: ^2.3.3+2
+  path: ^1.9.0
+  path_provider: ^2.1.4
+  
+  # Network & Connectivity
+  connectivity_plus: ^6.0.5
+  http: ^1.2.2
+  
+  # Google Drive Backup
+  google_sign_in: ^6.2.1
+  googleapis: ^13.2.0
+  googleapis_auth: ^1.6.0
+  
+  # Utils
+  intl: ^0.19.0
+  uuid: ^4.5.1
+  shared_preferences: ^2.3.2
+  pdf: ^3.11.1
+  printing: ^5.13.2
+  share_plus: ^10.0.3
+  permission_handler: ^11.3.1
+  workmanager: ^0.5.2
+  flutter_local_notifications: ^17.2.3
+  
+  # QR/Barcode
+  mobile_scanner: ^5.2.3
+  qr_flutter: ^4.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
