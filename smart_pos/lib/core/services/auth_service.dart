@@ -133,14 +133,23 @@ class AuthService extends ChangeNotifier {
         syncStatus: AppConstants.syncPending,
       );
 
-      // Save to Firestore
-      await _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(user.id)
-          .set(user.toJson());
-
-      // Save to local database
+      // Save to local database FIRST (always works)
       await _db.insert(AppConstants.usersTable, user.toJson());
+
+      // Try to save to Firestore (may fail if offline or rules not set)
+      try {
+        await _firestore
+            .collection(AppConstants.usersCollection)
+            .doc(user.id)
+            .set(user.toJson());
+        
+        // Mark as synced if successful
+        await _db.markAsSynced(AppConstants.usersTable, user.id);
+      } catch (firestoreError) {
+        // Firestore failed - that's OK, data is saved locally
+        // Will sync later when online
+        debugPrint('Firestore save failed (will sync later): $firestoreError');
+      }
 
       // Update preferences
       final prefs = await SharedPreferences.getInstance();
@@ -184,7 +193,30 @@ class AuthService extends ChangeNotifier {
       );
 
       if (credential.user != null) {
+        // Try to load user data (handles both online and offline)
         await _loadUserData(credential.user!.uid);
+        
+        // If user data still null, create basic user from auth info
+        if (_currentUser == null) {
+          _currentUser = UserModel(
+            id: credential.user!.uid,
+            email: email,
+            name: email.split('@').first,
+            businessName: 'My Business',
+            createdAt: DateTime.now(),
+            syncStatus: AppConstants.syncPending,
+          );
+          
+          // Save locally
+          await _db.insert(AppConstants.usersTable, _currentUser!.toJson());
+          
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool(AppConstants.isLoggedInKey, true);
+          await prefs.setString(AppConstants.userIdKey, _currentUser!.id);
+          await prefs.setString(AppConstants.userEmailKey, _currentUser!.email);
+        }
+        
+        _isAuthenticated = true;
         _isLoading = false;
         notifyListeners();
         return true;

@@ -40,7 +40,7 @@ class UserModel {
       updatedAt: json['updated_at'] != null 
           ? DateTime.parse(json['updated_at']) 
           : null,
-      isActive: json['is_active'] ?? true,
+      isActive: json['is_active'] == true || json['is_active'] == 1,
       syncStatus: json['sync_status'],
     );
   }
@@ -56,7 +56,7 @@ class UserModel {
       'logo_url': logoUrl,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
-      'is_active': isActive,
+      'is_active': isActive ? 1 : 0,
       'sync_status': syncStatus,
     };
   }

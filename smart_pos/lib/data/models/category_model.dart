@@ -30,7 +30,7 @@ class CategoryModel {
       description: json['description'],
       iconName: json['icon_name'],
       color: json['color'],
-      isActive: json['is_active'] ?? true,
+      isActive: json['is_active'] == true || json['is_active'] == 1,
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
@@ -49,7 +49,7 @@ class CategoryModel {
       'description': description,
       'icon_name': iconName,
       'color': color,
-      'is_active': isActive,
+      'is_active': isActive ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
       'sync_status': syncStatus,
