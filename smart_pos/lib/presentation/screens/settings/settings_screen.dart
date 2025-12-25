@@ -6,9 +6,13 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/connectivity_service.dart';
 import '../../../core/services/sync_service.dart';
+import '../../../core/services/printer_service.dart';
 import '../../widgets/common/custom_text_field.dart';
+import '../../widgets/printer/printer_setup_sheet.dart';
 import '../backup/backup_screen.dart';
 import '../auth/login_screen.dart';
+import '../dashboard/dashboard_screen.dart';
+import 'user_management_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -68,7 +72,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: Text('Settings', style: AppTheme.headingSmall),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            // Navigate to Dashboard instead of just popping (might have no screen to go back to)
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardScreen()),
+              );
+            }
+          },
         ),
       ),
       body: SingleChildScrollView(
@@ -79,6 +93,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // Profile Section
             _buildSectionHeader('Profile'),
             _buildProfileCard(authService),
+            const SizedBox(height: 24),
+
+            // User Management Section
+            _buildSectionHeader('User Management'),
+            _buildUserManagementCard(),
             const SizedBox(height: 24),
 
             // Sync Status
@@ -156,6 +175,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+
+            // Printer Settings
+            _buildSectionHeader('Printer'),
+            _buildPrinterCard(),
             const SizedBox(height: 24),
 
             // About
@@ -272,6 +296,296 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildUserManagementCard() {
+    return Container(
+      decoration: AppTheme.cardDecoration,
+      child: Column(
+        children: [
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.people,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+            title: Text('Staff Members', style: AppTheme.titleMedium),
+            subtitle: Text(
+              'Add and manage staff accounts',
+              style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+            ),
+            trailing: const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UserManagementScreen()),
+              );
+            },
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.warningColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.security,
+                color: AppTheme.warningColor,
+              ),
+            ),
+            title: Text('Roles & Permissions', style: AppTheme.titleMedium),
+            subtitle: Text(
+              'Admin, Manager, Cashier',
+              style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+            ),
+            trailing: const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+            onTap: () {
+              _showRolesInfoDialog();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRolesInfoDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.security, color: AppTheme.primaryColor),
+            const SizedBox(width: 8),
+            Text('Roles & Permissions', style: AppTheme.headingSmall),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildRoleInfo(
+                'Admin',
+                Icons.admin_panel_settings,
+                AppTheme.primaryColor,
+                ['Full access to all features', 'Manage users', 'View all reports', 'Backup & restore'],
+              ),
+              const SizedBox(height: 16),
+              _buildRoleInfo(
+                'Manager',
+                Icons.manage_accounts,
+                AppTheme.warningColor,
+                ['Manage products & categories', 'View reports', 'Make sales', 'Manage customers'],
+              ),
+              const SizedBox(height: 16),
+              _buildRoleInfo(
+                'Cashier',
+                Icons.point_of_sale,
+                AppTheme.infoColor,
+                ['Make sales (POS)', 'View own transactions', 'Basic customer info'],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoleInfo(String title, IconData icon, Color color, List<String> permissions) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: AppTheme.titleMedium.copyWith(color: color),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...permissions.map((p) => Padding(
+            padding: const EdgeInsets.only(left: 4, top: 2),
+            child: Row(
+              children: [
+                Icon(Icons.check, size: 14, color: color),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    p,
+                    style: AppTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrinterCard() {
+    return Consumer<PrinterService>(
+      builder: (context, printerService, _) {
+        final isConnected = printerService.isConnected;
+        final printer = printerService.connectedPrinter;
+        
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: AppTheme.cardDecoration,
+          child: Column(
+            children: [
+              InkWell(
+                onTap: () => showPrinterSetupSheet(context),
+                borderRadius: BorderRadius.circular(12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isConnected 
+                            ? AppTheme.successColor.withOpacity(0.1)
+                            : AppTheme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        isConnected ? Icons.print : Icons.print_outlined,
+                        color: isConnected 
+                            ? AppTheme.successColor 
+                            : AppTheme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            printer != null ? printer.name : 'Bluetooth Printer',
+                            style: AppTheme.titleMedium,
+                          ),
+                          Text(
+                            isConnected 
+                                ? 'Connected' 
+                                : printer != null 
+                                    ? 'Saved (not connected)' 
+                                    : 'Not configured',
+                            style: AppTheme.bodySmall.copyWith(
+                              color: isConnected 
+                                  ? AppTheme.successColor 
+                                  : AppTheme.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isConnected)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.successColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.check, size: 14, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Ready',
+                              style: AppTheme.labelMedium.copyWith(
+                                color: Colors.white,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+                  ],
+                ),
+              ),
+              if (isConnected) ...[
+                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: printerService.isPrinting 
+                            ? null 
+                            : () async {
+                                final success = await printerService.printTestPage();
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(success 
+                                          ? 'Test page printed!' 
+                                          : 'Print failed'),
+                                      backgroundColor: success 
+                                          ? AppTheme.successColor 
+                                          : AppTheme.errorColor,
+                                    ),
+                                  );
+                                }
+                              },
+                        icon: printerService.isPrinting 
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.print, size: 18),
+                        label: const Text('Test Print'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => printerService.disconnect(),
+                        icon: const Icon(Icons.bluetooth_disabled, size: 18),
+                        label: const Text('Disconnect'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.errorColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 

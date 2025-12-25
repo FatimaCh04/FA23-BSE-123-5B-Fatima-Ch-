@@ -53,21 +53,32 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString(AppConstants.userIdKey);
-
+      debugPrint('[ProductProvider] loadProducts() called');
+      
+      // Simplified query - load ALL active products
       final results = await _db.query(
         AppConstants.productsTable,
-        where: 'user_id = ? AND is_active = 1',
-        whereArgs: [userId],
+        where: 'is_active = 1',
         orderBy: 'name ASC',
       );
+      
+      debugPrint('[ProductProvider] Found ${results.length} products in database');
+      
+      // Debug: Print each product
+      for (var r in results) {
+        debugPrint('[ProductProvider] Product: ${r['name']}, id: ${r['id']}, user_id: ${r['user_id']}, is_active: ${r['is_active']}');
+      }
 
       _products = results.map((e) => ProductModel.fromJson(e)).toList();
+      
+      debugPrint('[ProductProvider] Loaded ${_products.length} products into memory');
+      
       _updateLowStockProducts();
       _errorMessage = null;
-    } catch (e) {
+    } catch (e, stackTrace) {
       _errorMessage = 'Failed to load products: $e';
+      debugPrint('[ProductProvider] Load products error: $e');
+      debugPrint('[ProductProvider] Stack trace: $stackTrace');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -197,15 +208,19 @@ class ProductProvider extends ChangeNotifier {
   Future<bool> addProduct(ProductModel product) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString(AppConstants.userIdKey);
+      String? userId = prefs.getString(AppConstants.userIdKey);
+      
+      // Debug: Log the user ID
+      debugPrint('Adding product with userId: $userId');
 
       final category = _categories.firstWhere(
         (c) => c.id == product.categoryId,
         orElse: () => CategoryModel(id: '', name: 'Uncategorized', createdAt: DateTime.now()),
       );
 
+      final productId = _uuid.v4();
       final newProduct = ProductModel(
-        id: _uuid.v4(),
+        id: productId,
         sku: product.sku,
         name: product.name,
         description: product.description,
@@ -219,10 +234,25 @@ class ProductProvider extends ChangeNotifier {
         imageUrl: product.imageUrl,
         createdAt: DateTime.now(),
         syncStatus: AppConstants.syncPending,
-        userId: userId,
+        userId: userId ?? 'local_user', // Use fallback if userId is null
       );
 
-      await _db.insert(AppConstants.productsTable, newProduct.toJson());
+      // Debug: Log product data
+      debugPrint('Inserting product: ${newProduct.toJson()}');
+
+      // Insert to database
+      final result = await _db.insert(AppConstants.productsTable, newProduct.toJson());
+      debugPrint('Database insert result: $result');
+
+      // Verify insertion by querying back
+      final verification = await _db.query(
+        AppConstants.productsTable,
+        where: 'id = ?',
+        whereArgs: [productId],
+      );
+      debugPrint('Verification query result: ${verification.length} records found');
+
+      // Add to memory list
       _products.add(newProduct);
 
       // Add stock history entry
@@ -244,8 +274,10 @@ class ProductProvider extends ChangeNotifier {
       _syncService.syncTable(AppConstants.productsTable);
 
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
       _errorMessage = 'Failed to add product: $e';
+      debugPrint('Error adding product: $e');
+      debugPrint('Stack trace: $stackTrace');
       notifyListeners();
       return false;
     }
@@ -323,7 +355,34 @@ class ProductProvider extends ChangeNotifier {
     String? notes,
   }) async {
     try {
-      final product = _products.firstWhere((p) => p.id == productId);
+      debugPrint('[ProductProvider] updateStock called for productId: $productId');
+      
+      // Try to find product in memory first
+      ProductModel? product;
+      final productIndex = _products.indexWhere((p) => p.id == productId);
+      
+      if (productIndex != -1) {
+        product = _products[productIndex];
+      } else {
+        // If not in memory, query database directly
+        debugPrint('[ProductProvider] Product not in memory, querying database...');
+        final results = await _db.query(
+          AppConstants.productsTable,
+          where: 'id = ?',
+          whereArgs: [productId],
+        );
+        if (results.isNotEmpty) {
+          product = ProductModel.fromJson(results.first);
+        }
+      }
+      
+      if (product == null) {
+        debugPrint('[ProductProvider] Product not found: $productId');
+        _errorMessage = 'Product not found';
+        notifyListeners();
+        return false;
+      }
+      
       final quantityBefore = product.quantity;
       int quantityAfter;
 

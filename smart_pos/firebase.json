@@ -1,0 +1,27 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "smartpos-945e3",
+          "appId": "1:1099180295632:android:f206a3b114bc4fe8b565d5",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "smartpos-945e3",
+          "configurations": {
+            "android": "1:1099180295632:android:f206a3b114bc4fe8b565d5",
+            "ios": "1:1099180295632:ios:1f24bb610afea8fdb565d5",
+            "web": "1:1099180295632:web:38c4ab20766f5365b565d5",
+            "windows": "1:1099180295632:web:e375710cad8af3e3b565d5"
+          }
+        }
+      }
+    }
+  }
+}

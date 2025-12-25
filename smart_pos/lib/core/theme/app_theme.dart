@@ -109,6 +109,12 @@ class AppTheme {
     color: textSecondary,
   );
 
+  static TextStyle get labelSmall => GoogleFonts.plusJakartaSans(
+    fontSize: 10,
+    fontWeight: FontWeight.w500,
+    color: textSecondary,
+  );
+
   static TextStyle get buttonText => GoogleFonts.plusJakartaSans(
     fontSize: 16,
     fontWeight: FontWeight.w600,

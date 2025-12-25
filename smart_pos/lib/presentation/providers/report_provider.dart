@@ -6,6 +6,15 @@ import '../../data/models/customer_model.dart';
 import '../../data/local/database_helper.dart';
 import '../../core/constants/app_constants.dart';
 
+// Debug flag - set to false in production
+const bool _enableDebugLogs = true;
+
+void _log(String message) {
+  if (_enableDebugLogs) {
+    debugPrint('[ReportProvider] $message');
+  }
+}
+
 class ReportProvider extends ChangeNotifier {
   final DatabaseHelper _db = DatabaseHelper();
 
@@ -327,65 +336,101 @@ class ReportProvider extends ChangeNotifier {
 
   // Dashboard summary
   Future<Map<String, dynamic>> getDashboardSummary() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString(AppConstants.userIdKey);
-    
-    final today = DateTime.now();
-    final todayStart = DateTime(today.year, today.month, today.day);
-    final monthStart = DateTime(today.year, today.month, 1);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString(AppConstants.userIdKey);
+      
+      _log('getDashboardSummary called with userId: $userId');
+      
+      final today = DateTime.now();
+      final todayStart = DateTime(today.year, today.month, today.day);
+      final monthStart = DateTime(today.year, today.month, 1);
 
-    // Today's sales
-    final todayResults = await _db.rawQuery('''
-      SELECT 
-        COUNT(*) as count,
-        COALESCE(SUM(total_amount), 0) as total
-      FROM ${AppConstants.salesTable}
-      WHERE user_id = ? AND sale_date >= ? AND is_void = 0
-    ''', [userId, todayStart.toIso8601String()]);
+      // First, let's get ALL products count without user filter for debugging
+      final allProductsDebug = await _db.rawQuery('''
+        SELECT COUNT(*) as count FROM ${AppConstants.productsTable}
+        WHERE is_active = 1
+      ''');
+      _log('All products count (no user filter): ${allProductsDebug.first['count']}');
 
-    // Month's sales
-    final monthResults = await _db.rawQuery('''
-      SELECT 
-        COUNT(*) as count,
-        COALESCE(SUM(total_amount), 0) as total
-      FROM ${AppConstants.salesTable}
-      WHERE user_id = ? AND sale_date >= ? AND is_void = 0
-    ''', [userId, monthStart.toIso8601String()]);
+      // Get all products with their user_ids for debugging
+      final productDetails = await _db.rawQuery('''
+        SELECT id, name, user_id, is_active FROM ${AppConstants.productsTable}
+        LIMIT 10
+      ''');
+      _log('Product details: $productDetails');
 
-    // Products count
-    final productCount = await _db.rawQuery('''
-      SELECT COUNT(*) as count FROM ${AppConstants.productsTable}
-      WHERE user_id = ? AND is_active = 1
-    ''', [userId]);
+      // Build user filter - SIMPLIFIED: just get all active products
+      // Products count - get ALL active products regardless of user
+      final productCount = await _db.rawQuery('''
+        SELECT COUNT(*) as count FROM ${AppConstants.productsTable}
+        WHERE is_active = 1
+      ''');
+      _log('Products with is_active=1: ${productCount.first['count']}');
 
-    // Low stock count
-    final lowStock = await _db.rawQuery('''
-      SELECT COUNT(*) as count FROM ${AppConstants.productsTable}
-      WHERE user_id = ? AND is_active = 1 AND quantity <= low_stock_threshold
-    ''', [userId]);
+      // Low stock count
+      final lowStock = await _db.rawQuery('''
+        SELECT COUNT(*) as count FROM ${AppConstants.productsTable}
+        WHERE is_active = 1 AND quantity <= low_stock_threshold
+      ''');
 
-    // Customer count
-    final customerCount = await _db.rawQuery('''
-      SELECT COUNT(*) as count FROM ${AppConstants.customersTable}
-      WHERE user_id = ? AND is_active = 1
-    ''', [userId]);
+      // Customer count - get ALL active customers
+      final customerCount = await _db.rawQuery('''
+        SELECT COUNT(*) as count FROM ${AppConstants.customersTable}
+        WHERE is_active = 1
+      ''');
 
-    // Total receivables
-    final receivables = await _db.rawQuery('''
-      SELECT COALESCE(SUM(outstanding_balance), 0) as total FROM ${AppConstants.customersTable}
-      WHERE user_id = ? AND is_active = 1
-    ''', [userId]);
+      // Total receivables
+      final receivables = await _db.rawQuery('''
+        SELECT COALESCE(SUM(outstanding_balance), 0) as total FROM ${AppConstants.customersTable}
+        WHERE is_active = 1
+      ''');
 
-    return {
-      'todaySales': todayResults.first['total'] ?? 0.0,
-      'todayTransactions': todayResults.first['count'] ?? 0,
-      'monthSales': monthResults.first['total'] ?? 0.0,
-      'monthTransactions': monthResults.first['count'] ?? 0,
-      'productCount': productCount.first['count'] ?? 0,
-      'lowStockCount': lowStock.first['count'] ?? 0,
-      'customerCount': customerCount.first['count'] ?? 0,
-      'totalReceivables': receivables.first['total'] ?? 0.0,
-    };
+      // Today's sales - simplified
+      final todayResults = await _db.rawQuery('''
+        SELECT 
+          COUNT(*) as count,
+          COALESCE(SUM(total_amount), 0) as total
+        FROM ${AppConstants.salesTable}
+        WHERE sale_date >= ? AND is_void = 0
+      ''', [todayStart.toIso8601String()]);
+
+      // Month's sales - simplified
+      final monthResults = await _db.rawQuery('''
+        SELECT 
+          COUNT(*) as count,
+          COALESCE(SUM(total_amount), 0) as total
+        FROM ${AppConstants.salesTable}
+        WHERE sale_date >= ? AND is_void = 0
+      ''', [monthStart.toIso8601String()]);
+
+      final result = {
+        'todaySales': todayResults.first['total'] ?? 0.0,
+        'todayTransactions': todayResults.first['count'] ?? 0,
+        'monthSales': monthResults.first['total'] ?? 0.0,
+        'monthTransactions': monthResults.first['count'] ?? 0,
+        'productCount': productCount.first['count'] ?? 0,
+        'lowStockCount': lowStock.first['count'] ?? 0,
+        'customerCount': customerCount.first['count'] ?? 0,
+        'totalReceivables': receivables.first['total'] ?? 0.0,
+      };
+      
+      _log('Dashboard summary result: $result');
+      return result;
+    } catch (e, stackTrace) {
+      _log('Error in getDashboardSummary: $e');
+      _log('Stack trace: $stackTrace');
+      return {
+        'todaySales': 0.0,
+        'todayTransactions': 0,
+        'monthSales': 0.0,
+        'monthTransactions': 0,
+        'productCount': 0,
+        'lowStockCount': 0,
+        'customerCount': 0,
+        'totalReceivables': 0.0,
+      };
+    }
   }
 
   void clearError() {

@@ -8,6 +8,7 @@ import '../../providers/product_provider.dart';
 import '../../providers/customer_provider.dart';
 import '../../providers/pos_provider.dart';
 import '../../providers/report_provider.dart';
+import '../../widgets/common/app_drawer.dart';
 import '../products/products_screen.dart';
 import '../inventory/inventory_screen.dart';
 import '../pos/pos_screen.dart';
@@ -32,7 +33,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // Use addPostFrameCallback to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   Future<void> _loadData() async {
@@ -64,73 +68,77 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final syncService = context.watch<SyncService>();
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Dashboard', style: AppTheme.headingSmall),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+        actions: [
+          // Connectivity Status
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: _buildStatusIndicator(
+              icon: connectivityService.isOnline
+                  ? Icons.wifi
+                  : Icons.wifi_off,
+              color: connectivityService.isOnline
+                  ? AppTheme.successColor
+                  : AppTheme.warningColor,
+              label: connectivityService.isOnline ? 'Online' : 'Offline',
+            ),
+          ),
+          // Sync Status
+          if (syncService.pendingSyncCount > 0)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: _buildStatusIndicator(
+                icon: Icons.sync,
+                color: AppTheme.infoColor,
+                label: '${syncService.pendingSyncCount}',
+                onTap: () => syncService.syncAll(),
+              ),
+            ),
+          // Settings
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            color: AppTheme.primaryColor,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SettingsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      drawer: const AppDrawer(currentIndex: 0),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadData,
           child: CustomScrollView(
             slivers: [
-              // App Bar
+              // Welcome Section
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(20),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Welcome back,',
-                              style: AppTheme.bodyMedium.copyWith(
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              authService.currentUser?.name ?? 'User',
-                              style: AppTheme.headingMedium,
-                            ),
-                          ],
+                      Text(
+                        'Welcome back,',
+                        style: AppTheme.bodyMedium.copyWith(
+                          color: AppTheme.textSecondary,
                         ),
                       ),
-                      // Connectivity Status
-                      _buildStatusIndicator(
-                        icon: connectivityService.isOnline
-                            ? Icons.wifi
-                            : Icons.wifi_off,
-                        color: connectivityService.isOnline
-                            ? AppTheme.successColor
-                            : AppTheme.warningColor,
-                        label: connectivityService.isOnline ? 'Online' : 'Offline',
-                      ),
-                      const SizedBox(width: 8),
-                      // Sync Status
-                      if (syncService.pendingSyncCount > 0)
-                        _buildStatusIndicator(
-                          icon: Icons.sync,
-                          color: AppTheme.infoColor,
-                          label: '${syncService.pendingSyncCount}',
-                          onTap: () => syncService.syncAll(),
-                        ),
-                      const SizedBox(width: 8),
-                      // Settings
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.settings_outlined),
-                          color: AppTheme.primaryColor,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const SettingsScreen(),
-                              ),
-                            );
-                          },
-                        ),
+                      const SizedBox(height: 4),
+                      Text(
+                        authService.currentUser?.name ?? 'User',
+                        style: AppTheme.headingMedium,
                       ),
                     ],
                   ),

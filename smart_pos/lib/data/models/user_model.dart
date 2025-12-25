@@ -6,6 +6,8 @@ class UserModel {
   final String? phone;
   final String? address;
   final String? logoUrl;
+  final String role; // admin, manager, cashier
+  final String? parentUserId; // For staff members, this is the admin's ID
   final DateTime createdAt;
   final DateTime? updatedAt;
   final bool isActive;
@@ -19,6 +21,8 @@ class UserModel {
     this.phone,
     this.address,
     this.logoUrl,
+    this.role = 'admin',
+    this.parentUserId,
     required this.createdAt,
     this.updatedAt,
     this.isActive = true,
@@ -34,6 +38,8 @@ class UserModel {
       phone: json['phone'],
       address: json['address'],
       logoUrl: json['logo_url'],
+      role: json['role'] ?? 'admin',
+      parentUserId: json['parent_user_id'],
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
@@ -54,12 +60,23 @@ class UserModel {
       'phone': phone,
       'address': address,
       'logo_url': logoUrl,
+      'role': role,
+      'parent_user_id': parentUserId,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
       'is_active': isActive ? 1 : 0,
       'sync_status': syncStatus,
     };
   }
+
+  bool get isAdmin => role == 'admin';
+  bool get isManager => role == 'manager';
+  bool get isCashier => role == 'cashier';
+  
+  bool canManageUsers() => role == 'admin';
+  bool canManageProducts() => role == 'admin' || role == 'manager';
+  bool canViewReports() => role == 'admin' || role == 'manager';
+  bool canMakeSales() => true; // All roles can make sales
 
   UserModel copyWith({
     String? id,
@@ -69,6 +86,8 @@ class UserModel {
     String? phone,
     String? address,
     String? logoUrl,
+    String? role,
+    String? parentUserId,
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isActive,
@@ -82,6 +101,8 @@ class UserModel {
       phone: phone ?? this.phone,
       address: address ?? this.address,
       logoUrl: logoUrl ?? this.logoUrl,
+      role: role ?? this.role,
+      parentUserId: parentUserId ?? this.parentUserId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,

@@ -242,8 +242,8 @@ class SyncService extends ChangeNotifier {
   }
 
   Future<void> _downloadRemoteChanges(String userId) async {
-    // Get last sync time or default to 24 hours ago
-    final lastSync = _lastSyncTime ?? DateTime.now().subtract(const Duration(hours: 24));
+    // Get last sync time or default to 30 days ago for better data recovery
+    final lastSync = _lastSyncTime ?? DateTime.now().subtract(const Duration(days: 30));
     
     // Download categories
     await _downloadCollection(
@@ -266,6 +266,30 @@ class SyncService extends ChangeNotifier {
       userId,
       AppConstants.customersCollection,
       AppConstants.customersTable,
+      lastSync,
+    );
+
+    // Download sales
+    await _downloadCollection(
+      userId,
+      AppConstants.salesCollection,
+      AppConstants.salesTable,
+      lastSync,
+    );
+
+    // Download ledger
+    await _downloadCollection(
+      userId,
+      AppConstants.ledgerCollection,
+      AppConstants.ledgerTable,
+      lastSync,
+    );
+
+    // Download stock history
+    await _downloadCollection(
+      userId,
+      AppConstants.stockHistoryCollection,
+      AppConstants.stockHistoryTable,
       lastSync,
     );
   }
@@ -348,6 +372,56 @@ class SyncService extends ChangeNotifier {
 
     await _updatePendingCount();
     notifyListeners();
+  }
+
+  // Force full sync - upload local changes and download remote data
+  Future<void> forceFullSync() async {
+    if (!_connectivityService.isOnline) {
+      _syncStatus = 'offline';
+      notifyListeners();
+      return;
+    }
+
+    await syncAll();
+  }
+
+  // Download all data from Firebase (useful on app startup or login)
+  Future<void> downloadAllData() async {
+    if (!_connectivityService.isOnline) return;
+
+    _isSyncing = true;
+    _syncStatus = 'downloading';
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString(AppConstants.userIdKey);
+      
+      if (userId == null) {
+        throw Exception('User not logged in');
+      }
+
+      // Download from the beginning of time to get all data
+      final startDate = DateTime(2020, 1, 1);
+      
+      // Download all collections
+      await _downloadCollection(userId, AppConstants.categoriesCollection, AppConstants.categoriesTable, startDate);
+      await _downloadCollection(userId, AppConstants.productsCollection, AppConstants.productsTable, startDate);
+      await _downloadCollection(userId, AppConstants.customersCollection, AppConstants.customersTable, startDate);
+      await _downloadCollection(userId, AppConstants.salesCollection, AppConstants.salesTable, startDate);
+      await _downloadCollection(userId, AppConstants.ledgerCollection, AppConstants.ledgerTable, startDate);
+      await _downloadCollection(userId, AppConstants.stockHistoryCollection, AppConstants.stockHistoryTable, startDate);
+
+      _syncStatus = 'completed';
+      debugPrint('Full data download completed');
+    } catch (e) {
+      _syncErrors.add('Download all data error: $e');
+      _syncStatus = 'error';
+      debugPrint('Download all data error: $e');
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
+    }
   }
 
   @override

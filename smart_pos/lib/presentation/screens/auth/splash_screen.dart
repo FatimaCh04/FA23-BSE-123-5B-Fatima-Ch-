@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/backup_service.dart';
+import '../../../core/services/sync_service.dart';
+import '../../../core/services/connectivity_service.dart';
 import 'login_screen.dart';
 import '../dashboard/dashboard_screen.dart';
 
@@ -51,6 +53,18 @@ class _SplashScreenState extends State<SplashScreen>
     final authService = context.read<AuthService>();
     
     if (authService.isAuthenticated) {
+      // Sync data from Firebase when user is logged in
+      final syncService = context.read<SyncService>();
+      final connectivityService = context.read<ConnectivityService>();
+      
+      if (connectivityService.isOnline) {
+        // Download all data from Firebase to ensure we have latest data
+        await syncService.syncAll();
+        debugPrint('Data synced from Firebase on startup');
+      }
+
+      if (!mounted) return;
+
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>

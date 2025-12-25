@@ -8,6 +8,7 @@ class CustomTextField extends StatelessWidget {
   final String? hint;
   final IconData? prefixIcon;
   final Widget? suffixIcon;
+  final Widget? suffix;
   final bool obscureText;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
@@ -28,6 +29,7 @@ class CustomTextField extends StatelessWidget {
     this.hint,
     this.prefixIcon,
     this.suffixIcon,
+    this.suffix,
     this.obscureText = false,
     this.keyboardType,
     this.inputFormatters,
@@ -75,6 +77,7 @@ class CustomTextField extends StatelessWidget {
                 ? Icon(prefixIcon, color: AppTheme.textSecondary, size: 22)
                 : null,
             suffixIcon: suffixIcon,
+            suffix: suffix,
             filled: true,
             fillColor: enabled ? AppTheme.surfaceColor : AppTheme.dividerColor.withOpacity(0.5),
             contentPadding: const EdgeInsets.symmetric(

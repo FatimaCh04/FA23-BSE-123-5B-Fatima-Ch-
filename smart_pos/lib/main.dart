@@ -8,6 +8,7 @@ import 'core/services/connectivity_service.dart';
 import 'core/services/sync_service.dart';
 import 'core/services/backup_service.dart';
 import 'core/services/auth_service.dart';
+import 'core/services/printer_service.dart';
 import 'presentation/providers/product_provider.dart';
 import 'presentation/providers/customer_provider.dart';
 import 'presentation/providers/pos_provider.dart';
@@ -55,6 +56,9 @@ void main() async {
   final authService = AuthService();
   await authService.initialize();
 
+  final printerService = PrinterService();
+  await printerService.initialize();
+
   runApp(
     MultiProvider(
       providers: [
@@ -62,6 +66,7 @@ void main() async {
         ChangeNotifierProvider.value(value: syncService),
         ChangeNotifierProvider.value(value: backupService),
         ChangeNotifierProvider.value(value: authService),
+        ChangeNotifierProvider.value(value: printerService),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => CustomerProvider()),
         ChangeNotifierProvider(create: (_) => POSProvider()),

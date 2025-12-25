@@ -239,8 +239,12 @@ class POSProvider extends ChangeNotifier {
     required ProductProvider productProvider,
     required CustomerProvider customerProvider,
   }) async {
+    debugPrint('[POSProvider] processSale called');
+    debugPrint('[POSProvider] Cart items: ${_cart.length}');
+    
     if (_cart.isEmpty) {
       _errorMessage = 'Cart is empty';
+      debugPrint('[POSProvider] Error: Cart is empty');
       notifyListeners();
       return null;
     }
@@ -252,6 +256,7 @@ class POSProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString(AppConstants.userIdKey);
+      debugPrint('[POSProvider] User ID: $userId');
       final saleId = _uuid.v4();
       final invoiceNumber = await _generateInvoiceNumber();
 
@@ -295,11 +300,11 @@ class POSProvider extends ChangeNotifier {
         userId: userId,
       );
 
-      // Save sale to database
-      await _db.insert(AppConstants.salesTable, {
-        ...sale.toJson(),
-        'items': null, // Don't store items in sale table
-      });
+      // Save sale to database - remove 'items' as it's stored separately
+      final saleJson = sale.toJson();
+      saleJson.remove('items'); // Don't store items in sale table
+      debugPrint('[POSProvider] Saving sale: $saleJson');
+      await _db.insert(AppConstants.salesTable, saleJson);
 
       // Save sale items
       for (final item in saleItems) {
@@ -307,13 +312,16 @@ class POSProvider extends ChangeNotifier {
       }
 
       // Update product quantities
+      debugPrint('[POSProvider] Updating stock for ${_cart.length} items');
       for (final item in _cart) {
-        await productProvider.updateStock(
+        debugPrint('[POSProvider] Updating stock for product: ${item.product.id} (${item.product.name}), qty: ${item.quantity}');
+        final stockUpdated = await productProvider.updateStock(
           productId: item.product.id,
           quantity: item.quantity,
           operationType: AppConstants.stockSale,
           notes: 'Sale #$invoiceNumber',
         );
+        debugPrint('[POSProvider] Stock update result: $stockUpdated');
       }
 
       // Handle credit sale
@@ -338,8 +346,10 @@ class POSProvider extends ChangeNotifier {
       notifyListeners();
 
       return sale;
-    } catch (e) {
+    } catch (e, stackTrace) {
       _errorMessage = 'Failed to process sale: $e';
+      debugPrint('[POSProvider] Error processing sale: $e');
+      debugPrint('[POSProvider] Stack trace: $stackTrace');
       _isProcessing = false;
       notifyListeners();
       return null;

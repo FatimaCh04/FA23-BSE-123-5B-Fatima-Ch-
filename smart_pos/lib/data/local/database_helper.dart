@@ -20,7 +20,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'smart_pos.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -37,6 +37,8 @@ class DatabaseHelper {
         phone TEXT,
         address TEXT,
         logo_url TEXT,
+        role TEXT DEFAULT 'admin',
+        parent_user_id TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT,
         is_active INTEGER DEFAULT 1,
@@ -220,6 +222,19 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     // Handle database migrations here
+    if (oldVersion < 2) {
+      // Add missing columns to users table
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.usersTable} ADD COLUMN role TEXT DEFAULT "admin"');
+      } catch (e) {
+        // Column might already exist
+      }
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.usersTable} ADD COLUMN parent_user_id TEXT');
+      } catch (e) {
+        // Column might already exist
+      }
+    }
   }
 
   // Generic CRUD Operations
