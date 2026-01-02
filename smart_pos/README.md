@@ -16,11 +16,12 @@ A complete working demonstration of the application is available here:
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/3410ab99-d416-489d-a30b-5d2c88667a7a" width="220">
-  &nbsp;&nbsp;&nbsp;
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <img src="https://github.com/user-attachments/assets/faac1179-d1cf-4127-aa6c-81d11b71b2a4" width="220">
-  &nbsp;&nbsp;&nbsp;
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <img src="https://github.com/user-attachments/assets/15fbeeab-9e9e-4622-a652-882b6da2f45a" width="220">
 </p>
+
 
 <br><br>
 
