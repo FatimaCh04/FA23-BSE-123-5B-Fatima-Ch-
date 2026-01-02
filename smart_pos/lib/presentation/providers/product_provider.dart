@@ -24,6 +24,11 @@ class ProductProvider extends ChangeNotifier {
   List<ProductModel> get products => _filteredProducts;
   List<ProductModel> get allProducts => _products;
   List<CategoryModel> get categories => _categories;
+  
+  // Get product count for a specific category
+  int getProductCountForCategory(String categoryId) {
+    return _products.where((p) => p.categoryId == categoryId && p.isActive).length;
+  }
   List<ProductModel> get lowStockProducts => _lowStockProducts;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -166,7 +171,7 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> deleteCategory(String categoryId) async {
+  Future<bool> deleteCategory(String categoryId, {bool forceDelete = false}) async {
     try {
       // Check if category has products
       final products = await _db.query(
@@ -175,10 +180,26 @@ class ProductProvider extends ChangeNotifier {
         whereArgs: [categoryId],
       );
 
-      if (products.isNotEmpty) {
+      if (products.isNotEmpty && !forceDelete) {
         _errorMessage = 'Cannot delete category with existing products';
         notifyListeners();
         return false;
+      }
+
+      // If force delete, also delete associated products
+      if (products.isNotEmpty && forceDelete) {
+        await _db.update(
+          AppConstants.productsTable,
+          {
+            'is_active': 0,
+            'updated_at': DateTime.now().toIso8601String(),
+            'sync_status': AppConstants.syncPending,
+          },
+          where: 'category_id = ?',
+          whereArgs: [categoryId],
+        );
+        // Remove from local list
+        _products.removeWhere((p) => p.categoryId == categoryId);
       }
 
       await _db.update(
@@ -196,6 +217,7 @@ class ProductProvider extends ChangeNotifier {
       notifyListeners();
 
       _syncService.syncTable(AppConstants.categoriesTable);
+      _syncService.syncTable(AppConstants.productsTable);
 
       return true;
     } catch (e) {

@@ -117,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo
+                // Logo - Custom POS Icon
                 Container(
                   width: 120,
                   height: 120,
@@ -132,10 +132,21 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.point_of_sale_rounded,
-                    size: 60,
-                    color: AppTheme.primaryColor,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(25),
+                    child: Image.asset(
+                      'assets/images/pos_icon.png',
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.point_of_sale_rounded,
+                          size: 60,
+                          color: AppTheme.primaryColor,
+                        );
+                      },
+                    ),
                   ),
                 ),
                 const SizedBox(height: 32),

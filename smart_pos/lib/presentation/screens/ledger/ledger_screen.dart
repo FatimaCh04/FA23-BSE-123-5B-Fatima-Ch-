@@ -39,19 +39,42 @@ class _LedgerScreenState extends State<LedgerScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFEEF2F5),
       appBar: AppBar(
-        title: Text('Ledger', style: AppTheme.headingSmall),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEC4899).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.receipt_long, color: Color(0xFFEC4899), size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Ledger',
+              style: TextStyle(
+                color: Color(0xFF1A202C),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF2D3748)),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list),
+            icon: const Icon(Icons.filter_list, color: Color(0xFF2D3748)),
             onPressed: () => _showFilterSheet(),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Color(0xFF2D3748)),
             onPressed: () {
               context.read<CustomerProvider>().loadAllLedgerEntries();
             },
@@ -61,7 +84,7 @@ class _LedgerScreenState extends State<LedgerScreen> with SingleTickerProviderSt
           controller: _tabController,
           indicatorColor: AppTheme.primaryColor,
           labelColor: AppTheme.primaryColor,
-          unselectedLabelColor: AppTheme.textSecondary,
+          unselectedLabelColor: const Color(0xFF64748B),
           tabs: const [
             Tab(text: 'All', icon: Icon(Icons.list_alt)),
             Tab(text: 'Receivables', icon: Icon(Icons.account_balance_wallet)),

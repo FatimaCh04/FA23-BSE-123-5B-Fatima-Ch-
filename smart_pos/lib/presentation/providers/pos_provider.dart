@@ -60,6 +60,7 @@ class POSProvider extends ChangeNotifier {
   // Recent sales
   List<SaleModel> _recentSales = [];
   List<SaleModel> _todaySales = [];
+  List<SaleModel> _allSales = [];
 
   List<CartItem> get cart => _cart;
   CustomerModel? get selectedCustomer => _selectedCustomer;
@@ -73,6 +74,7 @@ class POSProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   List<SaleModel> get recentSales => _recentSales;
   List<SaleModel> get todaySales => _todaySales;
+  List<SaleModel> get allSales => _allSales;
 
   // Calculated values
   double get subtotal => _cart.fold(0.0, (sum, item) => sum + item.totalPrice);
@@ -324,15 +326,27 @@ class POSProvider extends ChangeNotifier {
         debugPrint('[POSProvider] Stock update result: $stockUpdated');
       }
 
-      // Handle credit sale
-      if (due > 0 && _selectedCustomer != null && _selectedCustomer!.id != 'walk_in') {
-        await customerProvider.addCredit(
+      // Record sale for customer history (all sales to registered customers)
+      if (_selectedCustomer != null && _selectedCustomer!.id != 'walk_in') {
+        // Record the sale in customer's statement
+        await customerProvider.recordSale(
           customerId: _selectedCustomer!.id,
-          amount: due,
-          description: 'Credit sale #$invoiceNumber',
-          referenceId: saleId,
-          referenceType: 'sale',
+          totalAmount: totalAmount,
+          paidAmount: _paidAmount,
+          invoiceNumber: invoiceNumber,
+          saleId: saleId,
         );
+        
+        // Handle credit if there's due amount
+        if (due > 0) {
+          await customerProvider.addCredit(
+            customerId: _selectedCustomer!.id,
+            amount: due,
+            description: 'Credit sale #$invoiceNumber',
+            referenceId: saleId,
+            referenceType: 'sale',
+          );
+        }
       }
 
       // Clear cart and reload sales
@@ -432,6 +446,41 @@ class POSProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to load today\'s sales: $e');
+    }
+  }
+
+  // Load all sales for export
+  Future<void> loadAllSales() async {
+    try {
+      debugPrint('[POSProvider] Loading all sales for export...');
+      
+      // Load all sales (no user filter for export to include all data)
+      final results = await _db.query(
+        AppConstants.salesTable,
+        where: 'is_void = 0',
+        orderBy: 'sale_date DESC',
+      );
+
+      debugPrint('[POSProvider] Found ${results.length} sales in database');
+
+      _allSales = await Future.wait(results.map((sale) async {
+        final items = await _db.query(
+          AppConstants.saleItemsTable,
+          where: 'sale_id = ?',
+          whereArgs: [sale['id']],
+        );
+        debugPrint('[POSProvider] Sale ${sale['invoice_number']}: ${items.length} items');
+        return SaleModel.fromJson({
+          ...sale,
+          'items': items,
+        });
+      }));
+
+      debugPrint('[POSProvider] Loaded ${_allSales.length} sales for export');
+      notifyListeners();
+    } catch (e, stackTrace) {
+      debugPrint('Failed to load all sales: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
 

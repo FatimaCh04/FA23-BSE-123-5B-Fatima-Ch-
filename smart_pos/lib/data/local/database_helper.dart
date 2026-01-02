@@ -20,7 +20,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'smart_pos.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 7,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -53,6 +53,7 @@ class DatabaseHelper {
         name TEXT NOT NULL,
         description TEXT,
         icon_name TEXT,
+        image_url TEXT,
         color TEXT,
         is_active INTEGER DEFAULT 1,
         created_at TEXT NOT NULL,
@@ -74,6 +75,12 @@ class DatabaseHelper {
         cost_price REAL NOT NULL,
         sale_price REAL NOT NULL,
         quantity INTEGER DEFAULT 0,
+        unit TEXT,
+        vendor TEXT,
+        discount REAL DEFAULT 0,
+        tax REAL DEFAULT 0,
+        has_discount INTEGER DEFAULT 0,
+        has_tax INTEGER DEFAULT 0,
         low_stock_threshold INTEGER DEFAULT 10,
         barcode TEXT,
         image_url TEXT,
@@ -99,6 +106,26 @@ class DatabaseHelper {
         total_payments REAL DEFAULT 0,
         outstanding_balance REAL DEFAULT 0,
         last_purchase_date TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at TEXT NOT NULL,
+        updated_at TEXT,
+        sync_status TEXT DEFAULT 'pending',
+        user_id TEXT
+      )
+    ''');
+
+    // Vendors Table
+    await db.execute('''
+      CREATE TABLE ${AppConstants.vendorsTable} (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        company_name TEXT,
+        phone TEXT,
+        email TEXT,
+        address TEXT,
+        image_url TEXT,
+        total_purchases REAL DEFAULT 0,
+        outstanding_balance REAL DEFAULT 0,
         is_active INTEGER DEFAULT 1,
         created_at TEXT NOT NULL,
         updated_at TEXT,
@@ -185,11 +212,57 @@ class DatabaseHelper {
         quantity_after INTEGER NOT NULL,
         reference_id TEXT,
         reference_type TEXT,
+        vendor_id TEXT,
+        vendor_name TEXT,
+        purchase_id TEXT,
         notes TEXT,
         operation_date TEXT NOT NULL,
         created_at TEXT NOT NULL,
         sync_status TEXT DEFAULT 'pending',
         user_id TEXT,
+        FOREIGN KEY (product_id) REFERENCES ${AppConstants.productsTable}(id)
+      )
+    ''');
+
+    // Purchases Table
+    await db.execute('''
+      CREATE TABLE ${AppConstants.purchasesTable} (
+        id TEXT PRIMARY KEY,
+        vendor_id TEXT NOT NULL,
+        vendor_name TEXT,
+        invoice_number TEXT NOT NULL,
+        purchase_date TEXT NOT NULL,
+        subtotal REAL DEFAULT 0,
+        tax_amount REAL DEFAULT 0,
+        discount_amount REAL DEFAULT 0,
+        total_amount REAL NOT NULL,
+        paid_amount REAL DEFAULT 0,
+        due_amount REAL DEFAULT 0,
+        payment_status TEXT DEFAULT 'unpaid',
+        notes TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at TEXT NOT NULL,
+        updated_at TEXT,
+        sync_status TEXT DEFAULT 'pending',
+        user_id TEXT,
+        FOREIGN KEY (vendor_id) REFERENCES ${AppConstants.vendorsTable}(id)
+      )
+    ''');
+
+    // Purchase Items Table
+    await db.execute('''
+      CREATE TABLE ${AppConstants.purchaseItemsTable} (
+        id TEXT PRIMARY KEY,
+        purchase_id TEXT NOT NULL,
+        product_id TEXT NOT NULL,
+        product_name TEXT,
+        product_sku TEXT,
+        quantity INTEGER NOT NULL,
+        cost_price REAL NOT NULL,
+        total_price REAL NOT NULL,
+        created_at TEXT NOT NULL,
+        sync_status TEXT DEFAULT 'pending',
+        FOREIGN KEY (purchase_id) REFERENCES ${AppConstants.purchasesTable}(id),
         FOREIGN KEY (product_id) REFERENCES ${AppConstants.productsTable}(id)
       )
     ''');
@@ -218,6 +291,9 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_ledger_customer ON ${AppConstants.ledgerTable}(customer_id)');
     await db.execute('CREATE INDEX idx_stock_history_product ON ${AppConstants.stockHistoryTable}(product_id)');
     await db.execute('CREATE INDEX idx_sync_queue_table ON ${AppConstants.syncQueueTable}(table_name)');
+    await db.execute('CREATE INDEX idx_purchases_vendor ON ${AppConstants.purchasesTable}(vendor_id)');
+    await db.execute('CREATE INDEX idx_purchases_date ON ${AppConstants.purchasesTable}(purchase_date)');
+    await db.execute('CREATE INDEX idx_purchase_items_purchase ON ${AppConstants.purchaseItemsTable}(purchase_id)');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -234,6 +310,141 @@ class DatabaseHelper {
       } catch (e) {
         // Column might already exist
       }
+    }
+    
+    if (oldVersion < 3) {
+      // Add new product fields for unit, vendor, discount, and tax
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.productsTable} ADD COLUMN unit TEXT');
+      } catch (e) {
+        // Column might already exist
+      }
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.productsTable} ADD COLUMN vendor TEXT');
+      } catch (e) {
+        // Column might already exist
+      }
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.productsTable} ADD COLUMN discount REAL DEFAULT 0');
+      } catch (e) {
+        // Column might already exist
+      }
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.productsTable} ADD COLUMN tax REAL DEFAULT 0');
+      } catch (e) {
+        // Column might already exist
+      }
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.productsTable} ADD COLUMN has_discount INTEGER DEFAULT 0');
+      } catch (e) {
+        // Column might already exist
+      }
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.productsTable} ADD COLUMN has_tax INTEGER DEFAULT 0');
+      } catch (e) {
+        // Column might already exist
+      }
+    }
+    
+    if (oldVersion < 4) {
+      // Add image_url column to categories table
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.categoriesTable} ADD COLUMN image_url TEXT');
+      } catch (e) {
+        // Column might already exist
+      }
+    }
+    
+    if (oldVersion < 5) {
+      // Create vendors table
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS ${AppConstants.vendorsTable} (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            company_name TEXT,
+            phone TEXT,
+            email TEXT,
+            address TEXT,
+            image_url TEXT,
+            total_purchases REAL DEFAULT 0,
+            outstanding_balance REAL DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT,
+            sync_status TEXT DEFAULT 'pending',
+            user_id TEXT
+          )
+        ''');
+      } catch (e) {
+        // Table might already exist
+      }
+    }
+    
+    if (oldVersion < 6) {
+      // Add vendor tracking columns to stock_history
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.stockHistoryTable} ADD COLUMN vendor_id TEXT');
+      } catch (e) {}
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.stockHistoryTable} ADD COLUMN vendor_name TEXT');
+      } catch (e) {}
+      try {
+        await db.execute('ALTER TABLE ${AppConstants.stockHistoryTable} ADD COLUMN purchase_id TEXT');
+      } catch (e) {}
+    }
+    
+    if (oldVersion < 7) {
+      // Create purchases table
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS ${AppConstants.purchasesTable} (
+            id TEXT PRIMARY KEY,
+            vendor_id TEXT NOT NULL,
+            vendor_name TEXT,
+            invoice_number TEXT NOT NULL,
+            purchase_date TEXT NOT NULL,
+            subtotal REAL DEFAULT 0,
+            tax_amount REAL DEFAULT 0,
+            discount_amount REAL DEFAULT 0,
+            total_amount REAL NOT NULL,
+            paid_amount REAL DEFAULT 0,
+            due_amount REAL DEFAULT 0,
+            payment_status TEXT DEFAULT 'unpaid',
+            notes TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT,
+            sync_status TEXT DEFAULT 'pending',
+            user_id TEXT
+          )
+        ''');
+      } catch (e) {}
+      
+      // Create purchase_items table
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS ${AppConstants.purchaseItemsTable} (
+            id TEXT PRIMARY KEY,
+            purchase_id TEXT NOT NULL,
+            product_id TEXT NOT NULL,
+            product_name TEXT,
+            product_sku TEXT,
+            quantity INTEGER NOT NULL,
+            cost_price REAL NOT NULL,
+            total_price REAL NOT NULL,
+            created_at TEXT NOT NULL,
+            sync_status TEXT DEFAULT 'pending'
+          )
+        ''');
+      } catch (e) {}
+      
+      // Create indexes
+      try {
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_purchases_vendor ON ${AppConstants.purchasesTable}(vendor_id)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_purchases_date ON ${AppConstants.purchasesTable}(purchase_date)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_purchase_items_purchase ON ${AppConstants.purchaseItemsTable}(purchase_id)');
+      } catch (e) {}
     }
   }
 

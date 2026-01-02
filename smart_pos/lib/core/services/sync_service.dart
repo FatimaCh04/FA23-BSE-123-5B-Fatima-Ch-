@@ -13,7 +13,21 @@ class SyncService extends ChangeNotifier {
   SyncService._internal();
 
   final DatabaseHelper _db = DatabaseHelper();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore? _firestore;
+  bool _firebaseAvailable = false;
+  
+  FirebaseFirestore? get firestore {
+    if (!_firebaseAvailable) {
+      try {
+        _firestore ??= FirebaseFirestore.instance;
+        _firebaseAvailable = true;
+      } catch (e) {
+        debugPrint('Firebase not available: $e');
+        return null;
+      }
+    }
+    return _firestore;
+  }
   final ConnectivityService _connectivityService = ConnectivityService();
 
   bool _isSyncing = false;
@@ -79,6 +93,12 @@ class SyncService extends ChangeNotifier {
 
   Future<void> syncAll() async {
     if (_isSyncing || !_connectivityService.isOnline) return;
+    
+    // Check if Firebase is available
+    if (firestore == null) {
+      debugPrint('Sync skipped: Firebase not available');
+      return;
+    }
 
     _isSyncing = true;
     _syncStatus = 'syncing';
@@ -123,7 +143,7 @@ class SyncService extends ChangeNotifier {
     
     for (final record in records) {
       try {
-        await _firestore
+        await firestore!
             .collection(AppConstants.usersCollection)
             .doc(userId)
             .collection(AppConstants.categoriesCollection)
@@ -142,7 +162,7 @@ class SyncService extends ChangeNotifier {
     
     for (final record in records) {
       try {
-        await _firestore
+        await firestore!
             .collection(AppConstants.usersCollection)
             .doc(userId)
             .collection(AppConstants.productsCollection)
@@ -161,7 +181,7 @@ class SyncService extends ChangeNotifier {
     
     for (final record in records) {
       try {
-        await _firestore
+        await firestore!
             .collection(AppConstants.usersCollection)
             .doc(userId)
             .collection(AppConstants.customersCollection)
@@ -189,7 +209,7 @@ class SyncService extends ChangeNotifier {
         
         record['items'] = items;
         
-        await _firestore
+        await firestore!
             .collection(AppConstants.usersCollection)
             .doc(userId)
             .collection(AppConstants.salesCollection)
@@ -208,7 +228,7 @@ class SyncService extends ChangeNotifier {
     
     for (final record in records) {
       try {
-        await _firestore
+        await firestore!
             .collection(AppConstants.usersCollection)
             .doc(userId)
             .collection(AppConstants.ledgerCollection)
@@ -227,7 +247,7 @@ class SyncService extends ChangeNotifier {
     
     for (final record in records) {
       try {
-        await _firestore
+        await firestore!
             .collection(AppConstants.usersCollection)
             .doc(userId)
             .collection(AppConstants.stockHistoryCollection)
@@ -301,7 +321,7 @@ class SyncService extends ChangeNotifier {
     DateTime lastSync,
   ) async {
     try {
-      final snapshot = await _firestore
+      final snapshot = await firestore!
           .collection(AppConstants.usersCollection)
           .doc(userId)
           .collection(collection)

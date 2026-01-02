@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -31,10 +32,33 @@ class _POSScreenState extends State<POSScreen> {
     final isWideScreen = MediaQuery.of(context).size.width > 800;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFEEF2F5),
       appBar: AppBar(
-        title: Text('Point of Sale', style: AppTheme.headingSmall),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.point_of_sale, color: AppTheme.primaryColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Point of Sale',
+              style: TextStyle(
+                color: Color(0xFF1A202C),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF2D3748)),
           onPressed: () {
             context.read<POSProvider>().clearCart();
             Navigator.pop(context);
@@ -46,10 +70,10 @@ class _POSScreenState extends State<POSScreen> {
               if (pos.cart.isEmpty) return const SizedBox.shrink();
               return TextButton.icon(
                 onPressed: () => pos.clearCart(),
-                icon: const Icon(Icons.delete_outline, color: AppTheme.errorColor),
-                label: Text(
+                icon: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
+                label: const Text(
                   'Clear',
-                  style: AppTheme.labelMedium.copyWith(color: AppTheme.errorColor),
+                  style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w600),
                 ),
               );
             },
@@ -99,9 +123,9 @@ class _POSScreenState extends State<POSScreen> {
           builder: (context, pos, _) {
             if (pos.cart.isEmpty) return const SizedBox.shrink();
             return Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               decoration: BoxDecoration(
-                color: AppTheme.surfaceColor,
+                color: Colors.white,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -111,6 +135,7 @@ class _POSScreenState extends State<POSScreen> {
                 ],
               ),
               child: SafeArea(
+                top: false,
                 child: Row(
                   children: [
                     Expanded(
@@ -120,21 +145,48 @@ class _POSScreenState extends State<POSScreen> {
                         children: [
                           Text(
                             '${pos.totalItems} items',
-                            style: AppTheme.bodySmall,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             'PKR ${pos.totalAmount.toStringAsFixed(0)}',
-                            style: AppTheme.priceLarge,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    CustomButton(
-                      text: 'View Cart',
-                      onPressed: () => _showCartBottomSheet(),
-                      icon: Icons.shopping_cart,
-                      width: 140,
-                      height: 48,
+                    Material(
+                      color: AppTheme.primaryColor,
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        onTap: () => _showCartBottomSheet(),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.shopping_cart, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'View Cart',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -151,34 +203,58 @@ class _POSScreenState extends State<POSScreen> {
       children: [
         // Search Bar
         Padding(
-          padding: const EdgeInsets.all(16),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search products by name, SKU or barcode...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() => _searchQuery = '');
-                      },
-                    )
-                  : IconButton(
-                      icon: const Icon(Icons.qr_code_scanner),
-                      onPressed: () {
-                        // TODO: Implement barcode scanner
-                      },
-                    ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: AppTheme.surfaceColor,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            onChanged: (value) => setState(() => _searchQuery = value),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search products by name, SKU or ...',
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear, color: Colors.grey.shade500),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : Container(
+                        margin: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.qr_code_scanner, color: AppTheme.primaryColor, size: 20),
+                          onPressed: () {
+                            // TODO: Implement barcode scanner
+                          },
+                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              onChanged: (value) => setState(() => _searchQuery = value),
+            ),
           ),
         ),
 
@@ -186,32 +262,69 @@ class _POSScreenState extends State<POSScreen> {
         Consumer<ProductProvider>(
           builder: (context, provider, _) {
             return SizedBox(
-              height: 40,
+              height: 38,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: provider.categories.length + 1,
                 itemBuilder: (context, index) {
                   if (index == 0) {
+                    final isSelected = provider.selectedCategoryId == null;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: const Text('All'),
-                        selected: provider.selectedCategoryId == null,
-                        onSelected: (_) => provider.setSelectedCategory(null),
-                        selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                      child: GestureDetector(
+                        onTap: () => provider.setSelectedCategory(null),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppTheme.primaryColor : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              if (isSelected) const Icon(Icons.check, size: 16, color: Colors.white),
+                              if (isSelected) const SizedBox(width: 4),
+                              Text(
+                                'All',
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.grey.shade700,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   }
                   final category = provider.categories[index - 1];
+                  final isSelected = provider.selectedCategoryId == category.id;
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(category.name),
-                      selected: provider.selectedCategoryId == category.id,
-                      onSelected: (_) =>
-                          provider.setSelectedCategory(category.id),
-                      selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                    child: GestureDetector(
+                      onTap: () => provider.setSelectedCategory(category.id),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppTheme.primaryColor : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Text(
+                          category.name,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.grey.shade700,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 },
@@ -250,12 +363,12 @@ class _POSScreenState extends State<POSScreen> {
               }
 
               return GridView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  childAspectRatio: 0.85,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.0,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
                 ),
                 itemCount: products.length,
                 itemBuilder: (context, index) {
@@ -289,6 +402,7 @@ class _POSScreenState extends State<POSScreen> {
           (item) => item?.product.id == product.id,
           orElse: () => null,
         );
+    final isInCart = cartItem != null;
 
     return GestureDetector(
       onTap: product.isOutOfStock
@@ -296,14 +410,19 @@ class _POSScreenState extends State<POSScreen> {
           : () => posProvider.addToCart(product),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.surfaceColor,
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: cartItem != null
-                ? AppTheme.primaryColor
-                : AppTheme.dividerColor,
-            width: cartItem != null ? 2 : 1,
+            color: isInCart ? AppTheme.primaryColor : Colors.grey.shade200,
+            width: isInCart ? 2 : 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Stack(
           children: [
@@ -312,31 +431,35 @@ class _POSScreenState extends State<POSScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product Icon
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.inventory_2,
-                      color: product.isOutOfStock
-                          ? AppTheme.textLight
-                          : AppTheme.primaryColor,
-                      size: 20,
+                  // Product Image
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: isInCart 
+                            ? AppTheme.primaryColor.withOpacity(0.15)
+                            : Colors.grey.shade100,
+                      ),
+                      child: _buildPosProductImage(
+                        product.imageUrl,
+                        product.isOutOfStock,
+                        isInCart,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   // Product Name
                   Expanded(
                     child: Text(
                       product.name,
-                      style: AppTheme.labelLarge.copyWith(
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
                         color: product.isOutOfStock
-                            ? AppTheme.textLight
-                            : AppTheme.textPrimary,
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade800,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -345,42 +468,55 @@ class _POSScreenState extends State<POSScreen> {
                   // Price
                   Text(
                     'PKR ${product.salePrice.toStringAsFixed(0)}',
-                    style: AppTheme.priceText.copyWith(
-                      fontSize: 14,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                       color: product.isOutOfStock
-                          ? AppTheme.textLight
+                          ? Colors.grey.shade400
                           : AppTheme.primaryColor,
                     ),
                   ),
                   const SizedBox(height: 4),
                   // Stock
-                  Text(
-                    'Stock: ${product.quantity}',
-                    style: AppTheme.labelMedium.copyWith(
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
                       color: product.isLowStock
-                          ? AppTheme.warningColor
-                          : AppTheme.textSecondary,
+                          ? Colors.orange.withOpacity(0.1)
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'Stock: ${product.quantity}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: product.isLowStock
+                            ? Colors.orange.shade700
+                            : Colors.grey.shade600,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
             // Cart Quantity Badge
-            if (cartItem != null)
+            if (isInCart)
               Positioned(
                 top: 8,
                 right: 8,
                 child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
                     color: AppTheme.primaryColor,
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     '${cartItem.quantity}',
-                    style: AppTheme.labelMedium.copyWith(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
                   ),
                 ),
@@ -390,15 +526,23 @@ class _POSScreenState extends State<POSScreen> {
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(
-                    child: Text(
-                      'OUT OF STOCK',
-                      style: AppTheme.labelMedium.copyWith(
-                        color: AppTheme.errorColor,
-                        fontWeight: FontWeight.bold,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'OUT OF STOCK',
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
                       ),
                     ),
                   ),
@@ -408,6 +552,93 @@ class _POSScreenState extends State<POSScreen> {
         ),
       ),
     );
+  }
+
+  // Helper to build product image with network or file support for POS
+  Widget _buildPosProductImage(String? imageUrl, bool isOutOfStock, bool isInCart) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return Icon(
+        Icons.phone_android,
+        color: isOutOfStock
+            ? Colors.grey.shade400
+            : isInCart 
+                ? AppTheme.primaryColor
+                : Colors.grey.shade600,
+        size: 28,
+      );
+    }
+
+    Widget imageWidget;
+
+    // Check if it's a network URL or local file
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      imageWidget = Image.network(
+        imageUrl,
+        width: 50,
+        height: 50,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(
+            Icons.phone_android,
+            color: isOutOfStock
+                ? Colors.grey.shade400
+                : isInCart 
+                    ? AppTheme.primaryColor
+                    : Colors.grey.shade600,
+            size: 28,
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+                strokeWidth: 2,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      // Local file
+      imageWidget = Image.file(
+        File(imageUrl),
+        width: 50,
+        height: 50,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(
+            Icons.phone_android,
+            color: isOutOfStock
+                ? Colors.grey.shade400
+                : isInCart 
+                    ? AppTheme.primaryColor
+                    : Colors.grey.shade600,
+            size: 28,
+          );
+        },
+      );
+    }
+
+    // Apply grayscale filter if out of stock
+    if (isOutOfStock) {
+      return ColorFiltered(
+        colorFilter: const ColorFilter.mode(
+          Colors.grey,
+          BlendMode.saturation,
+        ),
+        child: imageWidget,
+      );
+    }
+
+    return imageWidget;
   }
 
   Widget _buildCartSection() {

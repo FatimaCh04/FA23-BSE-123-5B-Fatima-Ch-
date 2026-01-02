@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:excel/excel.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/pdf_service.dart';
@@ -187,6 +191,178 @@ class _InventoryLogsScreenState extends State<InventoryLogsScreen> {
     }
   }
 
+  Future<void> _exportExcel() async {
+    if (_logs.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No logs to export'),
+          backgroundColor: AppTheme.warningColor,
+        ),
+      );
+      return;
+    }
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final excel = Excel.createExcel();
+      final sheet = excel['Inventory Logs'];
+
+      // Header row
+      sheet.appendRow([
+        TextCellValue('Date'),
+        TextCellValue('Time'),
+        TextCellValue('Product'),
+        TextCellValue('Operation'),
+        TextCellValue('Qty Before'),
+        TextCellValue('Change'),
+        TextCellValue('Qty After'),
+        TextCellValue('Vendor'),
+        TextCellValue('Notes'),
+      ]);
+
+      // Style header
+      for (int i = 0; i < 9; i++) {
+        final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0));
+        cell.cellStyle = CellStyle(
+          bold: true,
+          backgroundColorHex: ExcelColor.fromHexString('#0D4D47'),
+          fontColorHex: ExcelColor.white,
+        );
+      }
+
+      // Data rows
+      for (var log in _logs) {
+        sheet.appendRow([
+          TextCellValue(DateFormat('dd/MM/yyyy').format(log.operationDate)),
+          TextCellValue(DateFormat('hh:mm a').format(log.operationDate)),
+          TextCellValue(log.productName ?? '-'),
+          TextCellValue(log.operationType.toUpperCase()),
+          IntCellValue(log.quantityBefore),
+          IntCellValue(log.quantityChange),
+          IntCellValue(log.quantityAfter),
+          TextCellValue(log.vendorName ?? '-'),
+          TextCellValue(log.notes ?? '-'),
+        ]);
+      }
+
+      // Auto-fit columns
+      for (int i = 0; i < 9; i++) {
+        sheet.setColumnWidth(i, 15);
+      }
+
+      // Remove default sheet
+      excel.delete('Sheet1');
+
+      // Save file
+      final fileBytes = excel.save();
+      if (fileBytes == null) throw Exception('Failed to generate Excel');
+
+      final directory = await getExternalStorageDirectory();
+      final fileName = 'Inventory_Logs_${DateFormat('yyyyMMdd').format(_selectedDate)}.xlsx';
+      final filePath = '${directory?.path ?? '/storage/emulated/0/Download'}/$fileName';
+      
+      final file = File(filePath);
+      await file.writeAsBytes(fileBytes);
+
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Open file
+      await OpenFile.open(filePath);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Excel saved: $fileName'),
+            backgroundColor: AppTheme.snackBarAdd,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if open
+      if (mounted) Navigator.of(context).pop();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error exporting Excel: ${e.toString()}'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showExportOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text('Export Options', style: AppTheme.titleLarge),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.picture_as_pdf, color: Colors.red),
+              ),
+              title: const Text('Export as PDF'),
+              subtitle: const Text('Share or print inventory logs'),
+              onTap: () {
+                Navigator.pop(context);
+                _exportPDF();
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.table_chart, color: Colors.green),
+              ),
+              title: const Text('Export as Excel'),
+              subtitle: const Text('Open in spreadsheet app'),
+              onTap: () {
+                Navigator.pop(context);
+                _exportExcel();
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -251,13 +427,13 @@ class _InventoryLogsScreenState extends State<InventoryLogsScreen> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _exportPDF,
+                onPressed: _showExportOptions,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.successColor,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                icon: const Icon(Icons.download),
-                label: const Text('Export Sales Report PDF'),
+                icon: const Icon(Icons.file_download),
+                label: const Text('Export Inventory Logs'),
               ),
             ),
           ),

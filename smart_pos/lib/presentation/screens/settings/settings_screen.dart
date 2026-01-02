@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
@@ -7,6 +9,8 @@ import '../../../core/services/auth_service.dart';
 import '../../../core/services/connectivity_service.dart';
 import '../../../core/services/sync_service.dart';
 import '../../../core/services/printer_service.dart';
+import '../../../data/local/database_helper.dart';
+import '../../providers/product_provider.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../../widgets/printer/printer_setup_sheet.dart';
 import '../backup/backup_screen.dart';
@@ -27,6 +31,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int _lowStockThreshold = 10;
   double _taxRate = 0.0;
   String _currency = 'PKR';
+  String? _profilePicturePath;
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -43,6 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           prefs.getInt(AppConstants.lowStockThresholdKey) ?? 10;
       _taxRate = prefs.getDouble(AppConstants.taxRateKey) ?? 0.0;
       _currency = prefs.getString(AppConstants.currencyKey) ?? 'PKR';
+      _profilePicturePath = prefs.getString('profile_picture_path');
     });
   }
 
@@ -68,12 +75,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final syncService = context.watch<SyncService>();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFEEF2F5),
       appBar: AppBar(
-        title: Text('Settings', style: AppTheme.headingSmall),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF64748B).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.settings, color: Color(0xFF64748B), size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Settings',
+              style: TextStyle(
+                color: Color(0xFF1A202C),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF2D3748)),
           onPressed: () {
-            // Navigate to Dashboard instead of just popping (might have no screen to go back to)
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
             } else {
@@ -182,6 +211,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildPrinterCard(),
             const SizedBox(height: 24),
 
+            // Danger Zone - Clear Data
+            _buildSectionHeader('Danger Zone'),
+            _buildDangerZoneCard(),
+            const SizedBox(height: 24),
+
             // About
             _buildSectionHeader('About'),
             _buildSettingCard(
@@ -257,14 +291,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
       decoration: AppTheme.cardDecoration,
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-            child: Text(
-              (user?.name.isNotEmpty ?? false) ? user!.name[0].toUpperCase() : 'U',
-              style: AppTheme.headingMedium.copyWith(
-                color: AppTheme.primaryColor,
-              ),
+          // Profile Picture with tap to change
+          GestureDetector(
+            onTap: () => _showProfilePictureOptions(),
+            child: Stack(
+              children: [
+                CircleAvatar(
+                  radius: 35,
+                  backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                  backgroundImage: _profilePicturePath != null && _profilePicturePath!.isNotEmpty
+                      ? FileImage(File(_profilePicturePath!))
+                      : null,
+                  child: _profilePicturePath == null || _profilePicturePath!.isEmpty
+                      ? Text(
+                          (user?.name.isNotEmpty ?? false) ? user!.name[0].toUpperCase() : 'U',
+                          style: AppTheme.headingMedium.copyWith(
+                            color: AppTheme.primaryColor,
+                            fontSize: 28,
+                          ),
+                        )
+                      : null,
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 16),
@@ -297,6 +362,151 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  void _showProfilePictureOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Profile Picture',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildPictureOption(
+                  icon: Icons.camera_alt,
+                  label: 'Camera',
+                  color: Colors.blue,
+                  onTap: () => _pickImage(ImageSource.camera),
+                ),
+                _buildPictureOption(
+                  icon: Icons.photo_library,
+                  label: 'Gallery',
+                  color: Colors.purple,
+                  onTap: () => _pickImage(ImageSource.gallery),
+                ),
+                if (_profilePicturePath != null && _profilePicturePath!.isNotEmpty)
+                  _buildPictureOption(
+                    icon: Icons.delete,
+                    label: 'Remove',
+                    color: Colors.red,
+                    onTap: () => _removeProfilePicture(),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPictureOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+
+      if (image != null) {
+        setState(() => _profilePicturePath = image.path);
+        
+        // Save to SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('profile_picture_path', image.path);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture updated!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeProfilePicture() async {
+    setState(() => _profilePicturePath = null);
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('profile_picture_path');
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile picture removed'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 
   Widget _buildUserManagementCard() {
@@ -933,6 +1143,300 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     }
+  }
+
+  Widget _buildDangerZoneCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.errorColor.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.errorColor.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.errorColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.delete_forever,
+                color: AppTheme.errorColor,
+              ),
+            ),
+            title: Text(
+              'Clear All Data',
+              style: AppTheme.titleMedium.copyWith(color: AppTheme.errorColor),
+            ),
+            subtitle: Text(
+              'Delete all products, categories, sales & customers',
+              style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+            ),
+            trailing: const Icon(Icons.chevron_right, color: AppTheme.errorColor),
+            onTap: _showClearDataDialog,
+          ),
+          const Divider(height: 1, color: Colors.transparent),
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.warningColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.restart_alt,
+                color: AppTheme.warningColor,
+              ),
+            ),
+            title: Text(
+              'Reset App',
+              style: AppTheme.titleMedium.copyWith(color: AppTheme.warningColor),
+            ),
+            subtitle: Text(
+              'Clear data and logout (keeps account)',
+              style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+            ),
+            trailing: const Icon(Icons.chevron_right, color: AppTheme.warningColor),
+            onTap: _showResetAppDialog,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showClearDataDialog() async {
+    final confirmController = TextEditingController();
+    
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: AppTheme.errorColor),
+            const SizedBox(width: 8),
+            Text('Clear All Data', style: AppTheme.headingSmall.copyWith(color: AppTheme.errorColor)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.errorColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('This will permanently delete:', style: AppTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    _buildDeleteItem('All Products'),
+                    _buildDeleteItem('All Categories'),
+                    _buildDeleteItem('All Sales & Transactions'),
+                    _buildDeleteItem('All Customers'),
+                    _buildDeleteItem('All Stock History'),
+                    _buildDeleteItem('All Ledger Entries'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Type "DELETE" to confirm:',
+                style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: confirmController,
+                decoration: InputDecoration(
+                  hintText: 'Type DELETE',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppTheme.errorColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppTheme.errorColor, width: 2),
+                  ),
+                ),
+                textCapitalization: TextCapitalization.characters,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (confirmController.text.toUpperCase() == 'DELETE') {
+                Navigator.pop(context, true);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please type DELETE to confirm'),
+                    backgroundColor: AppTheme.errorColor,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorColor,
+            ),
+            child: const Text('Clear All Data'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && mounted) {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Clearing all data...'),
+            ],
+          ),
+        ),
+      );
+
+      try {
+        // Clear all data from database
+        final db = DatabaseHelper();
+        await db.clearAllData();
+        
+        // Reload providers
+        if (mounted) {
+          await context.read<ProductProvider>().loadProducts();
+          await context.read<ProductProvider>().loadCategories();
+        }
+
+        if (mounted) {
+          Navigator.pop(context); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('All data cleared successfully'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.pop(context); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error clearing data: $e'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _showResetAppDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.restart_alt, color: AppTheme.warningColor),
+            const SizedBox(width: 8),
+            Text('Reset App', style: AppTheme.headingSmall),
+          ],
+        ),
+        content: const Text(
+          'This will clear all local data and log you out. Your account will not be deleted.\n\nAre you sure you want to continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.warningColor,
+            ),
+            child: const Text('Reset App'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && mounted) {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Resetting app...'),
+            ],
+          ),
+        ),
+      );
+
+      try {
+        // Clear all data
+        final db = DatabaseHelper();
+        await db.clearAllData();
+        
+        // Clear shared preferences (except login info)
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+
+        // Sign out
+        if (mounted) {
+          await context.read<AuthService>().signOut();
+        }
+
+        if (mounted) {
+          Navigator.pop(context); // Close loading dialog
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.pop(context); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error resetting app: $e'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _buildDeleteItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, top: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.close, size: 16, color: AppTheme.errorColor),
+          const SizedBox(width: 8),
+          Text(text, style: AppTheme.bodySmall),
+        ],
+      ),
+    );
   }
 }
 

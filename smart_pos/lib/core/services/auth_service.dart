@@ -11,9 +11,21 @@ class AuthService extends ChangeNotifier {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseAuth? _auth;
+  FirebaseFirestore? _firestore;
   final DatabaseHelper _db = DatabaseHelper();
+  bool _firebaseInitialized = false;
+  
+  void _initFirebase() {
+    if (_firebaseInitialized) return;
+    try {
+      _auth = FirebaseAuth.instance;
+      _firestore = FirebaseFirestore.instance;
+      _firebaseInitialized = true;
+    } catch (e) {
+      debugPrint('Firebase not available: $e');
+    }
+  }
 
   User? _firebaseUser;
   UserModel? _currentUser;
@@ -28,16 +40,21 @@ class AuthService extends ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
 
   Future<void> initialize() async {
-    _auth.authStateChanges().listen((user) async {
-      _firebaseUser = user;
-      if (user != null) {
-        await _loadUserData(user.uid);
-      } else {
-        _currentUser = null;
-        _isAuthenticated = false;
-      }
-      notifyListeners();
-    });
+    _initFirebase();
+    
+    // Only subscribe to auth changes if Firebase is available
+    if (_auth != null) {
+      _auth!.authStateChanges().listen((user) async {
+        _firebaseUser = user;
+        if (user != null) {
+          await _loadUserData(user.uid);
+        } else {
+          _currentUser = null;
+          _isAuthenticated = false;
+        }
+        notifyListeners();
+      });
+    }
 
     // Check for existing session
     await _checkExistingSession();
@@ -66,25 +83,29 @@ class AuthService extends ChangeNotifier {
 
   Future<void> _loadUserData(String uid) async {
     try {
-      // Try to get from Firestore first
-      final doc = await _firestore.collection(AppConstants.usersCollection).doc(uid).get();
-      
-      if (doc.exists) {
-        _currentUser = UserModel.fromJson({...doc.data()!, 'id': uid});
+      // Try to get from Firestore first (if available)
+      if (_firestore != null) {
+        final doc = await _firestore!.collection(AppConstants.usersCollection).doc(uid).get();
         
-        // Save to local database
-        await _db.insert(AppConstants.usersTable, _currentUser!.toJson());
-        
-        // Save to preferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool(AppConstants.isLoggedInKey, true);
-        await prefs.setString(AppConstants.userIdKey, uid);
-        await prefs.setString(AppConstants.userEmailKey, _currentUser!.email);
-        await prefs.setString(AppConstants.userNameKey, _currentUser!.name);
-        await prefs.setString(AppConstants.businessNameKey, _currentUser!.businessName);
-        
-        _isAuthenticated = true;
+        if (doc.exists) {
+          _currentUser = UserModel.fromJson({...doc.data()!, 'id': uid});
+          
+          // Save to local database
+          await _db.insert(AppConstants.usersTable, _currentUser!.toJson());
+          
+          // Save to preferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool(AppConstants.isLoggedInKey, true);
+          await prefs.setString(AppConstants.userIdKey, uid);
+          await prefs.setString(AppConstants.userEmailKey, _currentUser!.email);
+          await prefs.setString(AppConstants.userNameKey, _currentUser!.name);
+          await prefs.setString(AppConstants.businessNameKey, _currentUser!.businessName);
+          
+          _isAuthenticated = true;
+          return;
+        }
       }
+      throw Exception('Load from local');
     } catch (e) {
       // If offline, try to load from local database
       final localUsers = await _db.query(
@@ -112,19 +133,27 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Create Firebase Auth user
-      final credential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      if (credential.user == null) {
-        throw Exception('Failed to create user');
+      // Create Firebase Auth user (if Firebase is available)
+      UserCredential? credential;
+      String oderId;
+      
+      if (_auth != null) {
+        credential = await _auth!.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        if (credential.user == null) {
+          throw Exception('Failed to create user');
+        }
+        oderId = credential.user!.uid;
+      } else {
+        // Offline mode - generate local ID
+        oderId = DateTime.now().millisecondsSinceEpoch.toString();
       }
 
       // Create user model
       final user = UserModel(
-        id: credential.user!.uid,
+        id: oderId,
         email: email,
         name: name,
         businessName: businessName,
@@ -137,18 +166,20 @@ class AuthService extends ChangeNotifier {
       await _db.insert(AppConstants.usersTable, user.toJson());
 
       // Try to save to Firestore (may fail if offline or rules not set)
-      try {
-        await _firestore
-            .collection(AppConstants.usersCollection)
-            .doc(user.id)
-            .set(user.toJson());
-        
-        // Mark as synced if successful
-        await _db.markAsSynced(AppConstants.usersTable, user.id);
-      } catch (firestoreError) {
-        // Firestore failed - that's OK, data is saved locally
-        // Will sync later when online
-        debugPrint('Firestore save failed (will sync later): $firestoreError');
+      if (_firestore != null) {
+        try {
+          await _firestore!
+              .collection(AppConstants.usersCollection)
+              .doc(user.id)
+              .set(user.toJson());
+          
+          // Mark as synced if successful
+          await _db.markAsSynced(AppConstants.usersTable, user.id);
+        } catch (firestoreError) {
+          // Firestore failed - that's OK, data is saved locally
+          // Will sync later when online
+          debugPrint('Firestore save failed (will sync later): $firestoreError');
+        }
       }
 
       // Update preferences
@@ -187,7 +218,11 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final credential = await _auth.signInWithEmailAndPassword(
+      if (_auth == null) {
+        throw Exception('Firebase is not available. Please check your internet connection.');
+      }
+      
+      final credential = await _auth!.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -281,10 +316,12 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    try {
-      await _auth.signOut();
-    } catch (e) {
-      debugPrint('Firebase sign out error: $e');
+    if (_auth != null) {
+      try {
+        await _auth!.signOut();
+      } catch (e) {
+        debugPrint('Firebase sign out error: $e');
+      }
     }
 
     final prefs = await SharedPreferences.getInstance();
@@ -302,7 +339,10 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _auth.sendPasswordResetEmail(email: email);
+      if (_auth == null) {
+        throw Exception('Firebase is not available');
+      }
+      await _auth!.sendPasswordResetEmail(email: email);
       _isLoading = false;
       notifyListeners();
       return true;
@@ -349,16 +389,18 @@ class AuthService extends ChangeNotifier {
       );
 
       // Try to update Firestore
-      try {
-        await _firestore
-            .collection(AppConstants.usersCollection)
-            .doc(updatedUser.id)
-            .update(updatedUser.toJson());
+      if (_firestore != null) {
+        try {
+          await _firestore!
+              .collection(AppConstants.usersCollection)
+              .doc(updatedUser.id)
+              .update(updatedUser.toJson());
 
-        // Mark as synced
-        await _db.markAsSynced(AppConstants.usersTable, updatedUser.id);
-      } catch (e) {
-        debugPrint('Firestore update failed (offline): $e');
+          // Mark as synced
+          await _db.markAsSynced(AppConstants.usersTable, updatedUser.id);
+        } catch (e) {
+          debugPrint('Firestore update failed (offline): $e');
+        }
       }
 
       _currentUser = updatedUser;

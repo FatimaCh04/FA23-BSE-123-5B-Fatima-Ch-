@@ -51,16 +51,39 @@ class _BackupScreenState extends State<BackupScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFEEF2F5),
       appBar: AppBar(
-        title: Text('Backup & Restore', style: AppTheme.headingSmall),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.cloud_upload, color: Color(0xFF6366F1), size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Backup & Restore',
+              style: TextStyle(
+                color: Color(0xFF1A202C),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF2D3748)),
           onPressed: () => Navigator.pop(context),
         ),
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppTheme.primaryColor,
-          unselectedLabelColor: AppTheme.textSecondary,
+          unselectedLabelColor: const Color(0xFF64748B),
           indicatorColor: AppTheme.primaryColor,
           onTap: (index) {
             if (index == 1 && _cloudBackups.isEmpty) {
@@ -144,7 +167,7 @@ class _BackupScreenState extends State<BackupScreen>
               if (path != null && mounted) {
                 _loadLocalBackups();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Backup created successfully')),
+                  SnackBar(content: const Text('Backup created successfully'), backgroundColor: AppTheme.snackBarAdd),
                 );
               }
             },
@@ -245,8 +268,9 @@ class _BackupScreenState extends State<BackupScreen>
               if (success && mounted) {
                 _loadCloudBackups();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Backup uploaded to Google Drive')),
+                  SnackBar(
+                      content: const Text('Backup uploaded to Google Drive'),
+                      backgroundColor: AppTheme.snackBarAdd),
                 );
               }
             },
@@ -460,7 +484,7 @@ class _BackupScreenState extends State<BackupScreen>
       if (success && mounted) {
         _loadLocalBackups();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Backup deleted')),
+          SnackBar(content: const Text('Backup deleted'), backgroundColor: AppTheme.snackBarDelete),
         );
       }
     }

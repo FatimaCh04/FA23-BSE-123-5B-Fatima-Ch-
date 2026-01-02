@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Elegant Color Palette - Deep Teal & Gold
-  static const Color primaryColor = Color(0xFF1A535C);
-  static const Color primaryLight = Color(0xFF4ECDC4);
-  static const Color primaryDark = Color(0xFF0D2F35);
+  // Elegant Color Palette - Dark Teal (Splash Screen Style)
+  static const Color primaryColor = Color(0xFF0D4D47);  // Dark Teal
+  static const Color primaryLight = Color(0xFF1A6B62); // Medium Teal
+  static const Color primaryDark = Color(0xFF0A3D38);  // Very Dark Teal
   
   static const Color accentColor = Color(0xFFFFB800);
   static const Color accentLight = Color(0xFFFFD54F);
@@ -26,6 +26,11 @@ class AppTheme {
   
   static const Color dividerColor = Color(0xFFE5E7EB);
   static const Color shadowColor = Color(0x1A000000);
+  
+  // SnackBar Colors - Action Based
+  static const Color snackBarAdd = Color(0xFF3B82F6);     // Blue - for Add/Create
+  static const Color snackBarUpdate = Color(0xFFF59E0B); // Orange - for Update/Edit
+  static const Color snackBarDelete = Color(0xFFDC2626); // Red - for Delete
   
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
@@ -240,7 +245,7 @@ class AppTheme {
       thickness: 1,
     ),
     snackBarTheme: SnackBarThemeData(
-      backgroundColor: primaryDark,
+      backgroundColor: snackBarAdd, // Default Blue
       contentTextStyle: bodyMedium.copyWith(color: Colors.white),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(

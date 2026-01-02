@@ -9,17 +9,20 @@ import 'core/services/sync_service.dart';
 import 'core/services/backup_service.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/printer_service.dart';
+import 'core/services/data_seeder.dart';
 import 'presentation/providers/product_provider.dart';
 import 'presentation/providers/customer_provider.dart';
 import 'presentation/providers/pos_provider.dart';
 import 'presentation/providers/report_provider.dart';
+import 'presentation/providers/vendor_provider.dart';
+import 'presentation/providers/purchase_provider.dart';
 import 'presentation/screens/auth/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Set preferred orientations
-  await SystemChrome.setPreferredOrientations([
+  // Set preferred orientations (don't await - not critical)
+  SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
     DeviceOrientation.landscapeLeft,
@@ -34,7 +37,7 @@ void main() async {
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
 
-  // Initialize Firebase
+  // Initialize Firebase - must complete before services
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -43,21 +46,26 @@ void main() async {
     debugPrint('Firebase initialization error: $e');
   }
 
-  // Initialize services
+  // Initialize services - lightweight init only
   final connectivityService = ConnectivityService();
-  await connectivityService.initialize();
-
   final syncService = SyncService();
-  await syncService.initialize();
-
   final backupService = BackupService();
-  await backupService.initialize();
-
   final authService = AuthService();
-  await authService.initialize();
-
   final printerService = PrinterService();
-  await printerService.initialize();
+
+  // Initialize services in background after app starts
+  Future.microtask(() async {
+    await connectivityService.initialize();
+    await authService.initialize();
+    // These can run in parallel
+    Future.wait([
+      syncService.initialize(),
+      backupService.initialize(),
+      printerService.initialize(),
+    ]);
+    // Seed data - ensure 5 categories always exist
+    DataSeeder().ensureCategories();
+  });
 
   runApp(
     MultiProvider(
@@ -71,6 +79,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => CustomerProvider()),
         ChangeNotifierProvider(create: (_) => POSProvider()),
         ChangeNotifierProvider(create: (_) => ReportProvider()),
+        ChangeNotifierProvider(create: (_) => VendorProvider()),
+        ChangeNotifierProvider(create: (_) => PurchaseProvider()),
       ],
       child: const SmartPOSApp(),
     ),

@@ -8,6 +8,12 @@ class ProductModel {
   final double costPrice;
   final double salePrice;
   final int quantity;
+  final String? unit;
+  final String? vendor;
+  final double discount;
+  final double tax;
+  final bool hasDiscount;
+  final bool hasTax;
   final int lowStockThreshold;
   final String? barcode;
   final String? imageUrl;
@@ -27,6 +33,12 @@ class ProductModel {
     required this.costPrice,
     required this.salePrice,
     this.quantity = 0,
+    this.unit,
+    this.vendor,
+    this.discount = 0,
+    this.tax = 0,
+    this.hasDiscount = false,
+    this.hasTax = false,
     this.lowStockThreshold = 10,
     this.barcode,
     this.imageUrl,
@@ -41,6 +53,18 @@ class ProductModel {
   bool get isOutOfStock => quantity <= 0;
   double get profit => salePrice - costPrice;
   double get profitMargin => costPrice > 0 ? ((salePrice - costPrice) / costPrice) * 100 : 0;
+  
+  // Calculate final price with discount and tax
+  double get finalPrice {
+    double price = salePrice;
+    if (hasDiscount && discount > 0) {
+      price -= (price * discount / 100);
+    }
+    if (hasTax && tax > 0) {
+      price += (price * tax / 100);
+    }
+    return price;
+  }
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
@@ -53,6 +77,12 @@ class ProductModel {
       costPrice: (json['cost_price'] ?? 0).toDouble(),
       salePrice: (json['sale_price'] ?? 0).toDouble(),
       quantity: json['quantity'] ?? 0,
+      unit: json['unit'],
+      vendor: json['vendor'],
+      discount: (json['discount'] ?? 0).toDouble(),
+      tax: (json['tax'] ?? 0).toDouble(),
+      hasDiscount: json['has_discount'] == true || json['has_discount'] == 1,
+      hasTax: json['has_tax'] == true || json['has_tax'] == 1,
       lowStockThreshold: json['low_stock_threshold'] ?? 10,
       barcode: json['barcode'],
       imageUrl: json['image_url'],
@@ -79,6 +109,12 @@ class ProductModel {
       'cost_price': costPrice,
       'sale_price': salePrice,
       'quantity': quantity,
+      'unit': unit,
+      'vendor': vendor,
+      'discount': discount,
+      'tax': tax,
+      'has_discount': hasDiscount ? 1 : 0,
+      'has_tax': hasTax ? 1 : 0,
       'low_stock_threshold': lowStockThreshold,
       'barcode': barcode,
       'image_url': imageUrl,
@@ -100,6 +136,12 @@ class ProductModel {
     double? costPrice,
     double? salePrice,
     int? quantity,
+    String? unit,
+    String? vendor,
+    double? discount,
+    double? tax,
+    bool? hasDiscount,
+    bool? hasTax,
     int? lowStockThreshold,
     String? barcode,
     String? imageUrl,
@@ -119,6 +161,12 @@ class ProductModel {
       costPrice: costPrice ?? this.costPrice,
       salePrice: salePrice ?? this.salePrice,
       quantity: quantity ?? this.quantity,
+      unit: unit ?? this.unit,
+      vendor: vendor ?? this.vendor,
+      discount: discount ?? this.discount,
+      tax: tax ?? this.tax,
+      hasDiscount: hasDiscount ?? this.hasDiscount,
+      hasTax: hasTax ?? this.hasTax,
       lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
       barcode: barcode ?? this.barcode,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -130,4 +178,3 @@ class ProductModel {
     );
   }
 }
-

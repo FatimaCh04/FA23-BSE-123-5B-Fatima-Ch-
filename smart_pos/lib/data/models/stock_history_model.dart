@@ -4,12 +4,15 @@ class StockHistoryModel {
   final String id;
   final String productId;
   final String? productName;
-  final String operationType; // stock_in, stock_out, adjustment, sale, return
+  final String operationType; // stock_in, stock_out, adjustment, sale, return, purchase
   final int quantityBefore;
   final int quantityChange;
   final int quantityAfter;
   final String? referenceId;
   final String? referenceType;
+  final String? vendorId;      // Vendor who supplied (for purchase)
+  final String? vendorName;
+  final String? purchaseId;    // Purchase order reference
   final String? notes;
   final DateTime operationDate;
   final DateTime createdAt;
@@ -26,6 +29,9 @@ class StockHistoryModel {
     required this.quantityAfter,
     this.referenceId,
     this.referenceType,
+    this.vendorId,
+    this.vendorName,
+    this.purchaseId,
     this.notes,
     required this.operationDate,
     required this.createdAt,
@@ -50,6 +56,9 @@ class StockHistoryModel {
       quantityAfter: json['quantity_after'] ?? 0,
       referenceId: json['reference_id'],
       referenceType: json['reference_type'],
+      vendorId: json['vendor_id'],
+      vendorName: json['vendor_name'],
+      purchaseId: json['purchase_id'],
       notes: json['notes'],
       operationDate: json['operation_date'] != null 
           ? DateTime.parse(json['operation_date']) 
@@ -73,6 +82,9 @@ class StockHistoryModel {
       'quantity_after': quantityAfter,
       'reference_id': referenceId,
       'reference_type': referenceType,
+      'vendor_id': vendorId,
+      'vendor_name': vendorName,
+      'purchase_id': purchaseId,
       'notes': notes,
       'operation_date': operationDate.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
@@ -91,6 +103,9 @@ class StockHistoryModel {
     int? quantityAfter,
     String? referenceId,
     String? referenceType,
+    String? vendorId,
+    String? vendorName,
+    String? purchaseId,
     String? notes,
     DateTime? operationDate,
     DateTime? createdAt,
@@ -107,6 +122,9 @@ class StockHistoryModel {
       quantityAfter: quantityAfter ?? this.quantityAfter,
       referenceId: referenceId ?? this.referenceId,
       referenceType: referenceType ?? this.referenceType,
+      vendorId: vendorId ?? this.vendorId,
+      vendorName: vendorName ?? this.vendorName,
+      purchaseId: purchaseId ?? this.purchaseId,
       notes: notes ?? this.notes,
       operationDate: operationDate ?? this.operationDate,
       createdAt: createdAt ?? this.createdAt,

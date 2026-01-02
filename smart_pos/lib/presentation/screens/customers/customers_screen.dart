@@ -45,21 +45,43 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFEEF2F5),
       appBar: AppBar(
-        title: Text('Customers', style: AppTheme.headingSmall),
+        backgroundColor: Colors.white,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF2D3748)),
           onPressed: () => Navigator.pop(context),
         ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.people, color: Color(0xFF10B981), size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Customers',
+              style: TextStyle(
+                color: Color(0xFF1A202C),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         actions: [
-          // Date Filter Button
           IconButton(
-            icon: const Icon(Icons.date_range),
+            icon: const Icon(Icons.date_range, color: Color(0xFF2D3748)),
             tooltip: 'Filter by Date',
             onPressed: _showDateFilterDialog,
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list),
+            icon: const Icon(Icons.filter_list, color: Color(0xFF2D3748)),
             onSelected: (value) {
               setState(() => _selectedFilter = value);
               context.read<CustomerProvider>().setCustomerTypeFilter(value);
@@ -75,7 +97,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           controller: _tabController,
           indicatorColor: AppTheme.primaryColor,
           labelColor: AppTheme.primaryColor,
-          unselectedLabelColor: AppTheme.textSecondary,
+          unselectedLabelColor: const Color(0xFF64748B),
           tabs: const [
             Tab(text: 'All Customers', icon: Icon(Icons.people)),
             Tab(text: 'Top Customers', icon: Icon(Icons.star)),
@@ -87,9 +109,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           return TabBarView(
             controller: _tabController,
             children: [
-              // All Customers Tab
               _buildAllCustomersTab(provider),
-              // Top Customers Tab
               _buildTopCustomersTab(provider),
             ],
           );
@@ -97,8 +117,8 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddCustomerDialog(),
-        icon: const Icon(Icons.person_add),
-        label: const Text('Add Customer'),
+        icon: const Icon(Icons.person_add, color: Colors.white),
+        label: const Text('Add Customer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: AppTheme.primaryColor,
       ),
     );
@@ -132,7 +152,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           return Container(
-            height: MediaQuery.of(context).size.height * 0.55,
+            height: MediaQuery.of(context).size.height * 0.6,
             decoration: const BoxDecoration(
               color: AppTheme.surfaceColor,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -152,28 +172,29 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                 
                 // Header
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: AppTheme.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
                           Icons.date_range,
                           color: AppTheme.primaryColor,
+                          size: 20,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Filter by Date', style: AppTheme.headingSmall),
                             Text(
-                              'Select date range for customers',
+                              'Select date range',
                               style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
                             ),
                           ],
@@ -187,66 +208,60 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                   ),
                 ),
                 
-                // Quick Filter Buttons
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      _buildQuickDateButton(
-                        'Today So Far',
-                        () {
-                          final now = DateTime.now();
-                          setModalState(() {
-                            tempStartDate = DateTime(now.year, now.month, now.day);
-                            tempEndDate = now;
-                          });
-                        },
-                        setModalState,
-                      ),
-                      const SizedBox(height: 8),
-                      _buildQuickDateButton(
-                        'This Week',
-                        () {
-                          final now = DateTime.now();
-                          final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-                          setModalState(() {
-                            tempStartDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
-                            tempEndDate = now;
-                          });
-                        },
-                        setModalState,
-                      ),
-                      const SizedBox(height: 8),
-                      _buildQuickDateButton(
-                        'This Month',
-                        () {
-                          final now = DateTime.now();
-                          setModalState(() {
-                            tempStartDate = DateTime(now.year, now.month, 1);
-                            tempEndDate = now;
-                          });
-                        },
-                        setModalState,
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Custom Date Range
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      // Start Date
-                      InkWell(
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: tempStartDate ?? DateTime.now(),
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime.now(),
+                // Scrollable Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        // Quick Filter Buttons
+                        _buildQuickDateButton(
+                          'Today So Far',
+                          () {
+                            final now = DateTime.now();
+                            setModalState(() {
+                              tempStartDate = DateTime(now.year, now.month, now.day);
+                              tempEndDate = now;
+                            });
+                          },
+                          setModalState,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildQuickDateButton(
+                          'This Week',
+                          () {
+                            final now = DateTime.now();
+                            final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+                            setModalState(() {
+                              tempStartDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+                              tempEndDate = now;
+                            });
+                          },
+                          setModalState,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildQuickDateButton(
+                          'This Month',
+                          () {
+                            final now = DateTime.now();
+                            setModalState(() {
+                              tempStartDate = DateTime(now.year, now.month, 1);
+                              tempEndDate = now;
+                            });
+                          },
+                          setModalState,
+                        ),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Custom Date Range - Start Date
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: tempStartDate ?? DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
                           );
                           if (picked != null) {
                             setModalState(() => tempStartDate = picked);
@@ -308,15 +323,15 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                           ),
                         ),
                       ),
+                      const SizedBox(height: 20),
                     ],
+                    ),
                   ),
                 ),
                 
-                const Spacer(),
-                
                 // Action Buttons
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
                       Expanded(
@@ -554,21 +569,32 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: AppTheme.primaryGradient,
+            gradient: const LinearGradient(
+              colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             children: [
               const Icon(Icons.emoji_events, color: Colors.white, size: 40),
               const SizedBox(height: 12),
-              Text(
+              const Text(
                 'Top Customers by Purchases',
-                style: AppTheme.titleLarge.copyWith(color: Colors.white),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Total Business: PKR ${provider.customerStatistics['total_purchases']?.toStringAsFixed(0) ?? '0'}',
-                style: AppTheme.bodyMedium.copyWith(color: Colors.white.withOpacity(0.9)),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.9),
+                ),
               ),
             ],
           ),
@@ -609,15 +635,24 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
         rankIcon = Icons.looks_3;
         break;
       default:
-        rankColor = AppTheme.textSecondary;
+        rankColor = const Color(0xFF64748B);
         rankIcon = Icons.circle;
     }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration.copyWith(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: rank <= 3 ? Border.all(color: rankColor.withOpacity(0.5), width: 2) : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: InkWell(
         onTap: () => _showCustomerDetails(customer, provider),
@@ -625,33 +660,48 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
           children: [
             // Rank Badge
             Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: rankColor.withOpacity(0.2),
-                shape: BoxShape.circle,
+                color: rankColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
                 child: rank <= 3
                     ? Icon(rankIcon, color: rankColor, size: 28)
                     : Text(
                         '#$rank',
-                        style: AppTheme.titleMedium.copyWith(color: rankColor),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: rankColor,
                       ),
               ),
             ),
-            const SizedBox(width: 16),
+            ),
+            const SizedBox(width: 14),
 
             // Customer Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(customer.name, style: AppTheme.titleMedium),
+                  Text(
+                    customer.name,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A202C),
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Text(
-                    'Total Purchases: PKR ${customer.totalPurchases.toStringAsFixed(0)}',
-                    style: AppTheme.bodySmall.copyWith(color: AppTheme.successColor),
+                    'Total: PKR ${customer.totalPurchases.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF10B981),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -662,12 +712,16 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.warningColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFFF59E0B).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   'PKR ${customer.outstandingBalance.toStringAsFixed(0)}',
-                  style: AppTheme.labelSmall.copyWith(color: AppTheme.warningColor),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFF59E0B),
+                  ),
                 ),
               ),
           ],
@@ -679,23 +733,39 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
   Widget _buildMiniStat(String label, String value, Color color) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.2)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
             Text(
               value,
-              style: AppTheme.titleMedium.copyWith(color: color),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
               label,
-              style: AppTheme.labelMedium.copyWith(color: color),
+              style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -707,23 +777,41 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDecoration,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: InkWell(
         onTap: () => _showCustomerDetails(customer, provider),
         child: Row(
           children: [
             // Avatar
-            CircleAvatar(
-              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-              radius: 25,
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
               child: Text(
                 customer.name[0].toUpperCase(),
-                style: AppTheme.titleLarge.copyWith(
-                  color: AppTheme.primaryColor,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF10B981),
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            ),
+            const SizedBox(width: 14),
 
             // Customer Info
             Expanded(
@@ -735,23 +823,26 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                       Expanded(
                         child: Text(
                           customer.name,
-                          style: AppTheme.titleMedium,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1A202C),
+                          ),
                         ),
                       ),
                       if (customer.hasOutstanding)
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppTheme.warningColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
+                            color: const Color(0xFFF59E0B).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             'PKR ${customer.outstandingBalance.toStringAsFixed(0)}',
-                            style: AppTheme.labelMedium.copyWith(
-                              color: AppTheme.warningColor,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFF59E0B),
                             ),
                           ),
                         ),
@@ -761,11 +852,11 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                   if (customer.phone != null)
                     Text(
                       customer.phone!,
-                      style: AppTheme.bodySmall,
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                     ),
                   Text(
-                    'Total Purchases: PKR ${customer.totalPurchases.toStringAsFixed(0)}',
-                    style: AppTheme.bodySmall,
+                    'Total: PKR ${customer.totalPurchases.toStringAsFixed(0)}',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                 ],
               ),
@@ -773,13 +864,13 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
 
             // Actions
             PopupMenuButton(
-              icon: const Icon(Icons.more_vert, color: AppTheme.textSecondary),
+              icon: const Icon(Icons.more_vert, color: Color(0xFF64748B)),
               itemBuilder: (context) => [
                 const PopupMenuItem(
                   value: 'payment',
                   child: Row(
                     children: [
-                      Icon(Icons.payment, size: 20),
+                      Icon(Icons.payment, size: 20, color: Color(0xFF10B981)),
                       SizedBox(width: 8),
                       Text('Record Payment'),
                     ],
@@ -789,7 +880,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                   value: 'edit',
                   child: Row(
                     children: [
-                      Icon(Icons.edit_outlined, size: 20),
+                      Icon(Icons.edit_outlined, size: 20, color: AppTheme.primaryColor),
                       SizedBox(width: 8),
                       Text('Edit'),
                     ],
@@ -831,20 +922,31 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
             Icons.people_outline,
-            size: 64,
-            color: AppTheme.textLight,
+              size: 48,
+              color: Color(0xFF10B981),
           ),
-          const SizedBox(height: 16),
-          Text(
+          ),
+          const SizedBox(height: 20),
+          const Text(
             'No customers found',
-            style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondary),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
+            ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Add your first customer',
-            style: AppTheme.bodySmall,
+          const Text(
+            'Add your first customer to get started',
+            style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
           ),
         ],
       ),
@@ -957,7 +1059,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                       if (success && mounted) {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Customer added')),
+                          SnackBar(content: const Text('Customer added'), backgroundColor: AppTheme.snackBarAdd),
                         );
                       }
                     }
@@ -1075,7 +1177,7 @@ class _CustomersScreenState extends State<CustomersScreen> with SingleTickerProv
                       if (success && mounted) {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Customer updated')),
+                          SnackBar(content: const Text('Customer updated'), backgroundColor: AppTheme.snackBarUpdate),
                         );
                       }
                     }
@@ -2322,6 +2424,13 @@ class _CustomerDetailsSheetState extends State<_CustomerDetailsSheet>
       final prefs = await SharedPreferences.getInstance();
       final businessName = prefs.getString(AppConstants.businessNameKey) ?? 'Smart POS';
 
+      // Show loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Generating PDF...'), duration: Duration(seconds: 1)),
+        );
+      }
+
       final pdfData = await pdfService.generateCustomerStatement(
         customer: widget.customer,
         ledgerEntries: entries,
@@ -2331,21 +2440,10 @@ class _CustomerDetailsSheetState extends State<_CustomerDetailsSheet>
       );
 
       final fileName = 'Statement_${widget.customer.name.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
-      final filePath = await pdfService.savePDF(pdfData, fileName);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(filePath != null ? 'PDF saved successfully' : 'Failed to save PDF'),
-            action: filePath != null
-                ? SnackBarAction(
-                    label: 'Share',
-                    onPressed: () => pdfService.sharePDF(pdfData, fileName),
-                  )
-                : null,
-          ),
-        );
-      }
+      
+      // Use share to let user save/share the PDF
+      await pdfService.sharePDF(pdfData, fileName);
+      
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

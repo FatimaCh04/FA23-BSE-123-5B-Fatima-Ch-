@@ -508,6 +508,48 @@ class CustomerProvider extends ChangeNotifier {
     }
   }
 
+  // Record Sale to Customer (for statement history)
+  Future<bool> recordSale({
+    required String customerId,
+    required double totalAmount,
+    required double paidAmount,
+    required String invoiceNumber,
+    required String saleId,
+  }) async {
+    try {
+      final customer = _customers.firstWhere((c) => c.id == customerId);
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString(AppConstants.userIdKey);
+
+      // Create a ledger entry for the sale
+      final ledgerEntry = LedgerModel(
+        id: _uuid.v4(),
+        customerId: customerId,
+        customerName: customer.name,
+        transactionType: 'sale',
+        referenceId: saleId,
+        referenceType: 'sale',
+        description: 'Sale #$invoiceNumber - Total: PKR ${totalAmount.toStringAsFixed(0)}, Paid: PKR ${paidAmount.toStringAsFixed(0)}',
+        amount: totalAmount,
+        balanceBefore: customer.outstandingBalance,
+        balanceAfter: customer.outstandingBalance, // Balance doesn't change for recording sale
+        transactionDate: DateTime.now(),
+        createdAt: DateTime.now(),
+        syncStatus: AppConstants.syncPending,
+        userId: userId,
+      );
+
+      await _db.insert(AppConstants.ledgerTable, ledgerEntry.toJson());
+      
+      _syncService.syncTable(AppConstants.ledgerTable);
+      
+      return true;
+    } catch (e) {
+      debugPrint('Failed to record sale: $e');
+      return false;
+    }
+  }
+
   // Add Debit Entry (for opening balance, adjustments, etc.)
   Future<bool> addDebit({
     required String customerId,

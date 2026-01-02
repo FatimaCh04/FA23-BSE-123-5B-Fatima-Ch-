@@ -1,8 +1,23 @@
 class AppConstants {
   // App Info
-  static const String appName = 'Smart POS';
+  static const String appName = 'Mobile Shop POS';
   static const String appVersion = '1.0.0';
-  static const String appDescription = 'Smart POS & Full Inventory Management';
+  static const String appDescription = 'Mobile & Electronics Shop - Point of Sale';
+  static const String shopType = 'Mobile & Electronics';
+  
+  // Default Categories for Mobile Shop
+  static const List<String> defaultCategories = [
+    'Smartphones',
+    'Tablets',
+    'Laptops',
+    'Accessories',
+    'Chargers & Cables',
+    'Cases & Covers',
+    'Earphones & Headphones',
+    'Power Banks',
+    'Smart Watches',
+    'Spare Parts',
+  ];
   
   // Firebase Collections
   static const String usersCollection = 'users';
@@ -22,6 +37,9 @@ class AppConstants {
   static const String salesTable = 'sales';
   static const String saleItemsTable = 'sale_items';
   static const String customersTable = 'customers';
+  static const String vendorsTable = 'vendors';
+  static const String purchasesTable = 'purchases';
+  static const String purchaseItemsTable = 'purchase_items';
   static const String ledgerTable = 'ledger';
   static const String inventoryTable = 'inventory';
   static const String stockHistoryTable = 'stock_history';

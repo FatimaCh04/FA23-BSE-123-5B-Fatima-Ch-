@@ -1,6 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:excel/excel.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import '../../../core/theme/app_theme.dart';
 import '../../providers/report_provider.dart';
 import '../../widgets/common/app_drawer.dart';
@@ -58,23 +65,239 @@ class _ItemSalesReportScreenState extends State<ItemSalesReportScreen> {
     }
   }
 
-  Future<void> _exportPDF() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Generating Item Sales Report PDF...'),
-        backgroundColor: AppTheme.infoColor,
+  void _showExportOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text('Export Item Sales', style: AppTheme.titleLarge),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.picture_as_pdf, color: Colors.red),
+              ),
+              title: const Text('Export as PDF'),
+              subtitle: const Text('Share or print report'),
+              onTap: () {
+                Navigator.pop(context);
+                _exportPDF();
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.table_chart, color: Colors.green),
+              ),
+              title: const Text('Export as Excel'),
+              subtitle: const Text('Open in spreadsheet app'),
+              onTap: () {
+                Navigator.pop(context);
+                _exportExcel();
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
-    
-    await Future.delayed(const Duration(seconds: 1));
-    
-    if (mounted) {
+  }
+
+  Future<void> _exportPDF() async {
+    final provider = context.read<ReportProvider>();
+    final products = provider.topProducts;
+
+    if (products.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Item Sales Report PDF exported'),
-          backgroundColor: AppTheme.successColor,
+        const SnackBar(content: Text('No item sales data to export'), backgroundColor: AppTheme.warningColor),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final pdf = pw.Document();
+      final currencyFormat = NumberFormat.currency(symbol: 'PKR ', decimalDigits: 0);
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) => [
+            pw.Header(
+              level: 0,
+              child: pw.Text('Item Sales Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+            ),
+            pw.Text('Period: ${DateFormat('dd/MM/yyyy').format(_startDate)} - ${DateFormat('dd/MM/yyyy').format(_endDate)}'),
+            pw.SizedBox(height: 20),
+            pw.TableHelper.fromTextArray(
+              headers: ['Product', 'SKU', 'Qty Sold', 'Revenue'],
+              data: products.map((p) => [
+                p['name'] ?? '-',
+                p['sku'] ?? '-',
+                '${p['quantity'] ?? 0}',
+                currencyFormat.format((p['revenue'] ?? 0).toDouble()),
+              ]).toList(),
+            ),
+            pw.SizedBox(height: 20),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.end,
+              children: [
+                pw.Text('Total Revenue: ${currencyFormat.format(products.fold(0.0, (sum, p) => sum + ((p['revenue'] ?? 0) as num).toDouble()))}',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
+              ],
+            ),
+          ],
         ),
       );
+
+      final pdfBytes = await pdf.save();
+      final directory = await getExternalStorageDirectory();
+      final fileName = 'Item_Sales_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf';
+      final filePath = '${directory?.path ?? '/storage/emulated/0/Download'}/$fileName';
+      
+      final file = File(filePath);
+      await file.writeAsBytes(pdfBytes);
+
+      if (mounted) Navigator.pop(context);
+      await Share.shareXFiles([XFile(filePath)], text: 'Item Sales Report');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF saved: $fileName'), backgroundColor: AppTheme.snackBarAdd),
+        );
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.errorColor),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportExcel() async {
+    final provider = context.read<ReportProvider>();
+    final products = provider.topProducts;
+
+    if (products.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No item sales data to export'),
+          backgroundColor: AppTheme.warningColor,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final excel = Excel.createExcel();
+      final sheet = excel['Item Sales'];
+
+      sheet.appendRow([
+        TextCellValue('Product Name'),
+        TextCellValue('SKU'),
+        TextCellValue('Qty Sold'),
+        TextCellValue('Revenue'),
+        TextCellValue('Avg Price'),
+      ]);
+
+      for (int i = 0; i < 5; i++) {
+        final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0));
+        cell.cellStyle = CellStyle(
+          bold: true,
+          backgroundColorHex: ExcelColor.fromHexString('#0D4D47'),
+          fontColorHex: ExcelColor.white,
+        );
+      }
+
+      for (var product in products) {
+        sheet.appendRow([
+          TextCellValue(product['name'] ?? '-'),
+          TextCellValue(product['sku'] ?? '-'),
+          IntCellValue(product['quantity'] ?? 0),
+          DoubleCellValue((product['revenue'] ?? 0).toDouble()),
+          DoubleCellValue((product['avgPrice'] ?? 0).toDouble()),
+        ]);
+      }
+
+      sheet.appendRow([]);
+      sheet.appendRow([
+        TextCellValue('TOTAL'),
+        TextCellValue('${products.length} items'),
+        IntCellValue(products.fold(0, (sum, p) => sum + ((p['quantity'] ?? 0) as int))),
+        DoubleCellValue(products.fold(0.0, (sum, p) => sum + ((p['revenue'] ?? 0) as num).toDouble())),
+        TextCellValue(''),
+      ]);
+
+      excel.delete('Sheet1');
+
+      final fileBytes = excel.save();
+      if (fileBytes == null) throw Exception('Failed to generate Excel');
+
+      final directory = await getExternalStorageDirectory();
+      final fileName = 'Item_Sales_${DateFormat('yyyyMMdd').format(_startDate)}_${DateFormat('yyyyMMdd').format(_endDate)}.xlsx';
+      final filePath = '${directory?.path ?? '/storage/emulated/0/Download'}/$fileName';
+
+      final file = File(filePath);
+      await file.writeAsBytes(fileBytes);
+
+      if (mounted) Navigator.pop(context);
+      await OpenFile.open(filePath);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Excel saved: $fileName'),
+            backgroundColor: AppTheme.snackBarAdd,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     }
   }
 
@@ -91,9 +314,9 @@ class _ItemSalesReportScreenState extends State<ItemSalesReportScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            onPressed: _exportPDF,
-            tooltip: 'Export PDF',
+            icon: const Icon(Icons.file_download),
+            onPressed: _showExportOptions,
+            tooltip: 'Export',
           ),
         ],
       ),

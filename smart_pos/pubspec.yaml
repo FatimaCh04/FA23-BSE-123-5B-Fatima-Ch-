@@ -57,6 +57,13 @@ dependencies:
   mobile_scanner: ^7.0.0
   qr_flutter: ^4.1.0
   
+  # Image Picker
+  image_picker: ^1.1.2
+  
+  # Excel Export
+  excel: ^4.0.3
+  open_file: ^3.3.2
+  
   # Bluetooth Printing
   blue_thermal_printer: ^1.2.3
 
