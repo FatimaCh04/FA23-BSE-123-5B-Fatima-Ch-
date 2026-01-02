@@ -8,7 +8,7 @@ https://drive.google.com/file/d/1KiCuwPaUmf0M51ItezE7-eRari7mteoc/view?usp=shari
 ## 🖼️ Screenshots
 
 <!-- Container for all rows -->
-<div style="display: flex; flex-direction: column; align-items: center; gap: 40px;">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 80px;">
 
   <!-- Row 1 -->
   <div style="display: flex; gap: 50px;">
