@@ -6,9 +6,9 @@ https://drive.google.com/file/d/1DQjlv1e5xdz0vuSrt6UKf8cVNS3_gSRH/view?usp=shari
 
 ## 🎬 Demo Video
 A complete working demonstration of the application is available here:
-
-[Watch Demo Video]([https://drive.google.com/file/d/1KiCuwPaUmf0M51ItezE7-eRari7mteoc/view?usp=drive_link](https://drive.google.com/file/d/1KiCuwPaUmf0M51ItezE7-eRari7mteoc/view?usp=sharing))
-
+[
+[Watch Demo Video]([https://drive.google.com/file/d/1KiCuwPaUmf0M51ItezE7-eRari7mteoc/view?usp=drive_link](https://drive.google.com/file/d/1KiCuwPaUmf0M51ItezE7-eRai7mteoc/view?usp=sharing))
+](https://drive.google.com/file/d/1KiCuwPaUmf0M51ItezE7-eRari7mteoc/view?usp=sharing)
 ---
 
 ## 🖼️ Screenshots
